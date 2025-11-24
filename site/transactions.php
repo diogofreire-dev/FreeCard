@@ -395,7 +395,40 @@ foreach ($transactions as $t) {
               } elseif ($dayObj->format('Y-m-d') === $yesterday->format('Y-m-d')) {
                 echo 'Ontem';
               } else {
-                echo strftime('%A, %d de %B', strtotime($day));
+                // Arrays para tradução
+                $diasSemana = [
+                  'Sunday' => 'Domingo',
+                  'Monday' => 'Segunda-feira',
+                  'Tuesday' => 'Terça-feira',
+                  'Wednesday' => 'Quarta-feira',
+                  'Thursday' => 'Quinta-feira',
+                  'Friday' => 'Sexta-feira',
+                  'Saturday' => 'Sábado'
+                ];
+                
+                $meses = [
+                  'January' => 'janeiro',
+                  'February' => 'fevereiro',
+                  'March' => 'março',
+                  'April' => 'abril',
+                  'May' => 'maio',
+                  'June' => 'junho',
+                  'July' => 'julho',
+                  'August' => 'agosto',
+                  'September' => 'setembro',
+                  'October' => 'outubro',
+                  'November' => 'novembro',
+                  'December' => 'dezembro'
+                ];
+                
+                $diaSemanaEn = $dayObj->format('l');
+                $mesEn = $dayObj->format('F');
+                $dia = $dayObj->format('d');
+                
+                $diaSemana = $diasSemana[$diaSemanaEn];
+                $mes = $meses[$mesEn];
+                
+                echo "{$diaSemana}, {$dia} de {$mes}";
               }
               
               $dayTotal = array_sum(array_column($dayTransactions, 'amount'));
