@@ -271,8 +271,6 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
       color: var(--text-secondary) !important;
     }
     
-    /* ===== CORREÇÕES TEMA ESCURO - FILTROS ===== */
-    
     .form-select {
       background-color: var(--bg-primary);
       color: var(--text-primary);
@@ -326,6 +324,30 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
     /* Garantir que os ícones também seguem a cor */
     [data-theme="dark"] .form-label .bi {
       color: #ecf0f1;
+    }
+
+    /* Estilização da scrollbar para listas roláveis */
+    .scrollable-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .scrollable-list::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    .scrollable-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    .scrollable-list::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Firefox */
+    .scrollable-list {
+      scrollbar-color: var(--border-color) var(--bg-primary);
+      padding-right: 5px;
     }
   </style>
 </head>
@@ -506,7 +528,7 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
           <h5 class="card-title mb-4">
             <i class="bi bi-trophy"></i> Top 5 Maiores Gastos
           </h5>
-          <div style="max-height: 350px; overflow-y: auto;">
+          <div class="scrollable-list" style="max-height: 350px; overflow-y: auto;">
             <?php
             $stmtTopTransactions = $pdo->prepare("
               SELECT t.*, c.name as card_name, c.last4
