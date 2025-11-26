@@ -293,8 +293,8 @@ $categoryColors = [
     }
     .tendency-up {
       background:  var(--bg-primary);
-      color: #c00;
-      border: 1px solid #c00;
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
     }
     .tendency-down {
       background:  var(--bg-primary);
