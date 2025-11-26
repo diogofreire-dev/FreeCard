@@ -11,16 +11,15 @@ $messageType = 'info';
 
 // Mapeamento de cores
 $cardColors = [
-    'purple' => 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'blue' => 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+    'purple' => 'linear-gradient(135deg, #667eea 0%, #30055cff 100%)',
+    'blue' => 'linear-gradient(135deg, #2196F3 0%, #053666ff 100%)',
     'green' => 'linear-gradient(135deg, #13d168ff 0%, #005218ff 100%)',
-    'orange' => 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
-    'red' => 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)',
-    'pink' => 'linear-gradient(135deg, #E91E63 0%, #C2185B 100%)',
-    'teal' => 'linear-gradient(135deg, #00BCD4 0%, #0097A7 100%)',
-    'indigo' => 'linear-gradient(135deg, #3F51B5 0%, #303F9F 100%)'
+    'orange' => 'linear-gradient(135deg, #FF9800 0%, #6e3802ff 100%)',
+    'red' => 'linear-gradient(135deg, #f44336 0%, #700505ff 100%)',
+    'pink' => 'linear-gradient(135deg, #E91E63 0%, #68052cff 100%)',
+    'teal' => 'linear-gradient(135deg, #00BCD4 0%, #03515aff 100%)',
+    'indigo' => 'linear-gradient(135deg, #3F51B5 0%, #020c50ff 100%)'
 ];
-
 // Ações: ativar/desativar/eliminar
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     $cardId = intval($_POST['card_id'] ?? 0);

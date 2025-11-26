@@ -11,14 +11,14 @@ $success = false;
 
 // Cores disponíveis para os cartões
 $cardColors = [
-    'purple' => ['name' => 'Roxo', 'gradient' => 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'],
-    'blue' => ['name' => 'Azul', 'gradient' => 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)'],
+    'purple' => ['name' => 'Roxo', 'gradient' => 'linear-gradient(135deg, #667eea 0%, #30055cff 100%)'],
+    'blue' => ['name' => 'Azul', 'gradient' => 'linear-gradient(135deg, #2196F3 0%, #053666ff 100%)'],
     'green' => ['name' => 'Verde', 'gradient' => 'linear-gradient(135deg, #13d168ff 0%, #005218ff 100%)'],
-    'orange' => ['name' => 'Laranja', 'gradient' => 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)'],
-    'red' => ['name' => 'Vermelho', 'gradient' => 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)'],
-    'pink' => ['name' => 'Rosa', 'gradient' => 'linear-gradient(135deg, #E91E63 0%, #C2185B 100%)'],
-    'teal' => ['name' => 'Turquesa', 'gradient' => 'linear-gradient(135deg, #00BCD4 0%, #0097A7 100%)'],
-    'indigo' => ['name' => 'Índigo', 'gradient' => 'linear-gradient(135deg, #3F51B5 0%, #303F9F 100%)']
+    'orange' => ['name' => 'Laranja', 'gradient' => 'linear-gradient(135deg, #FF9800 0%, #6e3802ff 100%)'],
+    'red' => ['name' => 'Vermelho', 'gradient' => 'linear-gradient(135deg, #f44336 0%, #700505ff 100%)'],
+    'pink' => ['name' => 'Rosa', 'gradient' => 'linear-gradient(135deg, #E91E63 0%, #68052cff 100%)'],
+    'teal' => ['name' => 'Turquesa', 'gradient' => 'linear-gradient(135deg, #00BCD4 0%, #03515aff 100%)'],
+    'indigo' => ['name' => 'Índigo', 'gradient' => 'linear-gradient(135deg, #3F51B5 0%, #020c50ff 100%)']
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
