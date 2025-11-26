@@ -262,6 +262,7 @@ $categoryColors = [
       justify-content: center;
       font-size: 24px;
       flex-shrink: 0;
+      border: 1px solid currentColor;
     }
     .stat-mini-card .stat-label {
       font-size: 13px;
