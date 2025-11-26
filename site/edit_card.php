@@ -245,7 +245,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       justify-content: center;
     }
     .color-option input[type="radio"]:checked + .color-display::after {
-      content: '✓';
       color: white;
       font-size: 24px;
       font-weight: bold;
