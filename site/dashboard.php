@@ -286,17 +286,19 @@ $categoryColors = [
       align-items: center;
       gap: 4px;
       padding: 4px 12px;
-      border-radius: 20px;
+      border-radius: 300px;
       font-size: 13px;
       font-weight: 600;
     }
     .tendency-up {
-      background: #fee;
+      background:  var(--bg-primary);
       color: #c00;
+      border: 1px solid #c00;
     }
     .tendency-down {
-      background: #efe;
+      background:  var(--bg-primary);
       color: #0a0;
+      border: 1px solid #0a0;
     }
     
     /* Transação item */
@@ -487,7 +489,7 @@ $categoryColors = [
                 <div class="stat-value text-danger">€<?=number_format($biggestExpense['amount'],2)?></div>
                 <div class="stat-description"><?=htmlspecialchars($biggestExpense['description'])?></div>
               </div>
-              <div class="stat-icon" style="background: #fee; color: #e74c3c;">
+              <div class="stat-icon" style="background:  var(--bg-primary); color: #e74c3c;">
                 <i class="bi bi-exclamation-circle"></i>
               </div>
             </div>
@@ -504,7 +506,7 @@ $categoryColors = [
                 <div class="stat-value" style="color: var(--primary-green);"><?=htmlspecialchars($categoryData[0]['category'])?></div>
                 <div class="stat-description">€<?=number_format($categoryData[0]['total'],2)?> em <?=$categoryData[0]['count']?> transações</div>
               </div>
-              <div class="stat-icon" style="background: #e8f8f5; color: var(--primary-green);">
+              <div class="stat-icon" style="background:  var(--bg-primary); color: var(--primary-green);">
                 <i class="bi bi-star-fill"></i>
               </div>
             </div>
