@@ -499,16 +499,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-// Style for selected category
-document.querySelectorAll('.category-option').forEach(label => {
-  label.addEventListener('click', function() {
-    document.querySelectorAll('.category-option').forEach(l => l.style.borderColor = '#e9ecef');
-    document.querySelectorAll('.category-option').forEach(l => l.style.background = 'white');
-    this.style.borderColor = '#2ecc71';
-    this.style.background = 'rgba(46, 204, 113, 0.05)';
-  });
-});
-</script>
 </body>
 </html>
