@@ -245,3 +245,8 @@
   -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
   -webkit-text-fill-color: var(--text-primary);
 }
+
+/* Styling for month input calendar icon to match theme */
+[data-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
