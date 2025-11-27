@@ -171,6 +171,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .amount-input:focus {
       border-color: var(--primary-green);
     }
+    .amount-input::-webkit-outer-spin-button,
+    .amount-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .amount-input[type=number] {
+      -moz-appearance: textfield;
+    }
     .category-option {
       border: 2px solid var(--border-color);
       border-radius: 12px;
