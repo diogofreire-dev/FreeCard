@@ -142,6 +142,10 @@
   color: #3498db;
 }
 
+[data-theme="dark"] .btn-close {
+  filter: invert(1);
+}
+
 [data-theme="dark"] .btn-outline-secondary {
   color: var(--text-primary);
   border-color: var(--border-color);

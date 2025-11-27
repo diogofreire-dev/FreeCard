@@ -27,28 +27,39 @@ if (!$settings) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $theme = $_POST['theme'] ?? 'light';
     $notifications = isset($_POST['notifications']) ? 1 : 0;
-    
-    try {
-        $stmt = $pdo->prepare("
-            UPDATE user_settings 
-            SET theme = :theme, notifications = :notifications
-            WHERE user_id = :uid
-        ");
-        $stmt->execute([
-            ':theme' => $theme,
-            ':notifications' => $notifications,
-            ':uid' => $uid
-        ]);
-        
-        // Atualizar configurações locais
-        $settings['theme'] = $theme;
-        $settings['notifications'] = $notifications;
-        
-        $message = 'Configurações atualizadas com sucesso!';
-        $messageType = 'success';
-    } catch (PDOException $e) {
-        $message = 'Erro ao atualizar configurações.';
-        $messageType = 'danger';
+
+    // Verificar se houve alterações
+    $hasChanges = false;
+    if ($theme !== $settings['theme'] || $notifications != $settings['notifications']) {
+        $hasChanges = true;
+    }
+
+    if ($hasChanges) {
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE user_settings
+                SET theme = :theme, notifications = :notifications
+                WHERE user_id = :uid
+            ");
+            $stmt->execute([
+                ':theme' => $theme,
+                ':notifications' => $notifications,
+                ':uid' => $uid
+            ]);
+
+            // Atualizar configurações locais
+            $settings['theme'] = $theme;
+            $settings['notifications'] = $notifications;
+
+            $message = 'Configurações atualizadas com sucesso!';
+            $messageType = 'success';
+        } catch (PDOException $e) {
+            $message = 'Erro ao atualizar configurações.';
+            $messageType = 'danger';
+        }
+    } else {
+        $message = 'Nenhuma alteração foi feita.';
+        $messageType = 'info';
     }
 }
 
