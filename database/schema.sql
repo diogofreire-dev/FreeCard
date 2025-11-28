@@ -1,3 +1,4 @@
+DROP DATABASE pap;
 -- database/schema.sql
 CREATE DATABASE IF NOT EXISTS pap CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE pap;
@@ -56,7 +57,7 @@ INSERT INTO cards (user_id, name, last4, limit_amount, balance, color) VALUES
 INSERT INTO transactions (user_id, card_id, amount, description, category, created_at) VALUES
 (1, 1, 45.60, 'Café e snack', 'Alimentação', NOW() - INTERVAL 2 DAY),
 (1, 1, 120.00, 'Supermercado', 'Compras', NOW() - INTERVAL 5 DAY),
-(1, 2, 12.50, 'Uber', 'Transporte', NOW() - INTERVAL 1 DAY);
+(1, 2, 12.50, 'Uber', 'Transporte', NOW() - INTERVAL 1 DAY);ok
 
 SELECT COALESCE(SUM(amount),0) AS total_month
 FROM transactions

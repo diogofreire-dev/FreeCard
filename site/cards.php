@@ -4,6 +4,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../config/db.php';
 $uid = $_SESSION['user_id'] ?? null;
 require_once __DIR__ . '/theme_helper.php';
+require_once __DIR__ . '/bank_list.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
 $message = '';
@@ -298,7 +299,20 @@ $activeCards = count(array_filter($cards, fn($c) => $c['active']));
           <div class="card h-100">
             <div class="card-body p-4">
               <!-- Card Visual -->
-              <div class="card-visual <?=$c['active'] ? '' : 'card-visual-inactive'?> mb-3" style="background: <?=$gradient?>;">
+          <div class="card-visual <?=$c['active'] ? '' : 'card-visual-inactive'?> mb-3" style="background: <?=$gradient?>;">
+            <?php
+              // Mostrar nome do banco no canto superior esquerdo se disponível
+              $bankKey = $c['bank'] ?? null;
+              if ($bankKey) {
+                $bankInfo = getBank($bankKey);
+                if ($bankInfo) {
+                  $bankDisplay = htmlspecialchars($bankInfo['name']);
+                } else {
+                  $bankDisplay = htmlspecialchars($bankKey);
+                }
+                echo "<div style=\"position:absolute;top:12px;left:12px;z-index:5;\"><span class='badge' style='background: rgba(0,0,0,0.08); color: #fff; padding: 6px 10px; font-weight:700;'>" . strtoupper($bankDisplay) . "</span></div>";
+              }
+            ?>
                 <div>
                   <div class="mb-2">
                     <i class="bi bi-credit-card" style="font-size: 28px;"></i>

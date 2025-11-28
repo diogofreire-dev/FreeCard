@@ -4,6 +4,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../config/db.php';
 $uid = $_SESSION['user_id'] ?? null;
 require_once __DIR__ . '/theme_helper.php';
+require_once __DIR__ . '/bank_list.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
 $errors = [];
@@ -27,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $limit = floatval($_POST['limit_amount'] ?? 0);
     $balance = floatval($_POST['balance'] ?? 0);
     $color = $_POST['color'] ?? 'purple';
+  $bank_type = $_POST['bank_type'] ?? null;
 
     // Validações
     if (strlen($name) < 3) {
@@ -50,18 +52,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $stmt = $pdo->prepare("
-                INSERT INTO cards (user_id, name, last4, limit_amount, balance, active, color) 
-                VALUES (:uid, :name, :last4, :limit, :balance, 1, :color)
-            ");
-            $stmt->execute([
-                ':uid' => $uid,
-                ':name' => $name,
-                ':last4' => $last4,
-                ':limit' => $limit,
-                ':balance' => $balance,
-                ':color' => $color
-            ]);
+      // Check if 'bank' column exists in cards table — if so, include it in the insert
+      $hasBank = false;
+      try {
+        $col = $pdo->query("SHOW COLUMNS FROM cards LIKE 'bank'")->fetch();
+        if ($col) { $hasBank = true; }
+      } catch (Exception $e) {
+        // ignore — assume column missing
+      }
+
+      if ($hasBank) {
+        $stmt = $pdo->prepare(
+          "INSERT INTO cards (user_id, name, last4, limit_amount, balance, active, color, bank) 
+           VALUES (:uid, :name, :last4, :limit, :balance, 1, :color, :bank)"
+        );
+        $stmt->execute([
+          ':uid' => $uid,
+          ':name' => $name,
+          ':last4' => $last4,
+          ':limit' => $limit,
+          ':balance' => $balance,
+          ':color' => $color,
+          ':bank' => $bank_type
+        ]);
+      } else {
+        $stmt = $pdo->prepare(
+          "INSERT INTO cards (user_id, name, last4, limit_amount, balance, active, color) 
+           VALUES (:uid, :name, :last4, :limit, :balance, 1, :color)"
+        );
+        $stmt->execute([
+          ':uid' => $uid,
+          ':name' => $name,
+          ':last4' => $last4,
+          ':limit' => $limit,
+          ':balance' => $balance,
+          ':color' => $color
+        ]);
+      }
             $success = true;
             
             // Limpar campos após sucesso
@@ -82,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <title>Adicionar Cartão - Freecard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="css/theme.css">
 <style>
     :root {
@@ -94,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--text-primary);
     }
     .navbar { 
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); 
       background: var(--navbar-bg);
     }
     .navbar-brand img { height: 35px; margin-right: 8px; }
@@ -221,6 +249,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-weight: bold;
       text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
+    /* Compact bank selector (horizontal pills) */
+    .bank-selector-compact {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-top: 12px;
+    }
+    .bank-selector-compact::-webkit-scrollbar { height: 8px; }
+    .bank-selector-compact::-webkit-scrollbar-thumb { background: rgba(0,0,0,0); border-radius: 4px; }
+    .bank-label {
+      min-height: 40px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      background: var(--bg-primary);
+    }
+    .bank-label:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.06); }
     
     /* Tema escuro - ajustes específicos */
     [data-theme="dark"] .text-muted {
@@ -279,8 +332,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <h5 class="mb-4"><i class="bi bi-eye"></i> Pré-visualização</h5>
               <div class="card-preview" id="cardPreview" style="background: <?=$cardColors['purple']['gradient']?>;">
                 <div>
-                  <div class="mb-3">
-                    <i class="bi bi-credit-card" style="font-size: 32px;"></i>
+                  <div class="mb-3" id="preview-logo" style="pointer-events: none;">
+                    <i class="fa fa-credit-card" style="font-size: 32px;"></i>
                   </div>
                   <div class="card-number" id="preview-number">•••• •••• •••• ••••</div>
                 </div>
@@ -332,6 +385,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <?php endif; ?>
 
               <form method="post" id="cardForm">
+                <div class="mb-3">
+                  <label class="form-label"></i> Escolhe o Banco</label>
+                  <div class="bank-selector-compact">
+                    <?php 
+                    $categories = getBanksByCategory();
+                    foreach($categories as $categoryName => $banks):
+                      foreach($banks as $bankKey => $bank):
+                    ?>
+                    <label class="bank-label" style="border: 2px solid transparent;">
+                      <input type="radio" name="bank_type" value="<?=$bankKey?>" style="display: none;" data-name="<?=htmlspecialchars($bank['name'])?>" data-use-name="1">
+                      <div style="color: <?=$bank['color']?>; padding: 2px 6px;"><?=htmlspecialchars($bank['name'])?></div>
+                    </label>
+                    <?php 
+                      endforeach;
+                    endforeach; 
+                    ?>
+                  </div>
+                  <small class="text-muted mt-2 d-block">Seleciona a rede/banco do teu cartão</small>
+                </div>
+
                 <div class="mb-3">
                   <label class="form-label">Nome do Cartão *</label>
                   <input 
@@ -452,6 +525,81 @@ document.querySelectorAll('input[name="color"]').forEach(radio => {
   radio.addEventListener('change', function() {
     const gradient = this.dataset.gradient;
     document.getElementById('cardPreview').style.background = gradient;
+  });
+});
+
+// Mudança de tipo de cartão (para actualizar ícone no preview)
+document.querySelectorAll('input[name="card_type"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const type = this.dataset.type || 'outros';
+    const previewLogo = document.getElementById('preview-logo');
+    
+    // Mapa de tipos para ícones Font Awesome
+    const iconMap = {
+      'outros': 'fa-credit-card',
+      'visa': 'fa-cc-visa',
+      'mastercard': 'fa-cc-mastercard',
+      'amex': 'fa-cc-amex'
+    };
+    
+    const icon = iconMap[type] || 'fa-credit-card';
+    previewLogo.innerHTML = `<i class="fa ${icon}" style="font-size: 32px;"></i>`;
+  });
+});
+
+// Mudança de banco (seletor visual com ícones / logos)
+document.querySelectorAll('input[name="bank_type"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const icon = this.dataset.icon || 'fa-credit-card';
+    const logo = this.dataset.logo || '';
+    const useName = this.dataset.useName === '1' || this.dataset.useName === 'true';
+    const bankName = this.dataset.name || '';
+    const previewLogo = document.getElementById('preview-logo');
+
+    // Limpar preview
+    previewLogo.innerHTML = '';
+
+    if (useName) {
+      // Mostrar o nome do banco quando o logo tiver fundo opaco ou não for desejado
+      const span = document.createElement('div');
+      span.textContent = bankName.toUpperCase();
+      span.style.fontSize = '12px';
+      span.style.fontWeight = '700';
+      span.style.letterSpacing = '1px';
+      previewLogo.appendChild(span);
+    } else if (logo) {
+      // Mostrar logo oficial quando disponível
+      const img = document.createElement('img');
+      img.src = logo;
+      img.style.maxHeight = '40px';
+      img.style.maxWidth = '120px';
+      img.style.objectFit = 'contain';
+      img.onerror = function() {
+        // fallback para ícone Font Awesome
+        this.remove();
+        const i = document.createElement('i');
+        i.className = 'fa ' + icon;
+        i.style.fontSize = '32px';
+        previewLogo.appendChild(i);
+      };
+      previewLogo.appendChild(img);
+    } else {
+      const i = document.createElement('i');
+      i.className = 'fa ' + icon;
+      i.style.fontSize = '32px';
+      previewLogo.appendChild(i);
+    }
+
+    // Actualizar border do label selecionado
+    document.querySelectorAll('.bank-selector label').forEach(label => {
+      label.style.borderColor = 'transparent';
+      label.style.background = 'transparent';
+    });
+    const lbl = this.closest('label');
+    if (lbl) {
+      lbl.style.borderColor = 'var(--primary-green)';
+      lbl.style.background = 'rgba(46, 204, 113, 0.1)';
+    }
   });
 });
 
