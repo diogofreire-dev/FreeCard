@@ -38,7 +38,7 @@ if (!empty($_SESSION['user_id'])) {
     }
     
     .navbar-brand img {
-      height: 40px;
+      height: 70px;
       margin-right: 10px;
     }
     
@@ -286,7 +286,7 @@ if (!empty($_SESSION['user_id'])) {
         </div>
       </div>
       <div class="col-lg-6 d-none d-lg-block text-center">
-        <img src="assets/logo.png" alt="Freecard" style="max-width: 500px; filter: brightness(0) invert(1);">
+        <img src="assets/logo2.png" alt="Freecard" style="max-width: 500px; filter: brightness(0) invert(1);">
       </div>
     </div>
   </div>
