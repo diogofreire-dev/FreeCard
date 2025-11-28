@@ -38,8 +38,7 @@ if (!empty($_SESSION['user_id'])) {
     }
     
     .navbar-brand img {
-      height: 70px;
-      margin-right: 10px;
+      height: 60px;
     }
     
     .hero {
