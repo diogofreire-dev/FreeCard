@@ -66,15 +66,15 @@ $stmt->execute([':uid' => $uid]);
 $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Buscar cartões
-$stmt = $pdo->prepare("SELECT id, name, last4 FROM cards WHERE user_id = :uid ORDER BY name");
+$stmt = $pdo->prepare("SELECT id, name FROM cards WHERE user_id = :uid ORDER BY name");
 $stmt->execute([':uid' => $uid]);
 $cards = $stmt->fetchAll();
 
 // Query base
 $sql = "
-    SELECT t.*, c.name AS card_name, c.last4 
-    FROM transactions t 
-    LEFT JOIN cards c ON c.id = t.card_id 
+    SELECT t.*, c.name AS card_name
+    FROM transactions t
+    LEFT JOIN cards c ON c.id = t.card_id
     WHERE t.user_id = :uid
 ";
 $params = [':uid' => $uid];
@@ -348,7 +348,7 @@ foreach ($transactions as $t) {
           <option value="">Todos os cartões</option>
           <?php foreach($cards as $c): ?>
             <option value="<?=$c['id']?>" <?=$card_id == $c['id'] ? 'selected' : ''?>>
-              <?=htmlspecialchars($c['name'])?> (<?=$c['last4']?>)
+              <?=htmlspecialchars($c['name'])?>
             </option>
           <?php endforeach; ?>
         </select>
@@ -462,7 +462,7 @@ foreach ($transactions as $t) {
                     <?php if($t['card_name']): ?>
                       <small class="text-muted">
                         <i class="bi bi-credit-card"></i>
-                        <?=htmlspecialchars($t['card_name'])?> (<?=htmlspecialchars($t['last4'])?>)
+                        <?=htmlspecialchars($t['card_name'])?>
                       </small>
                     <?php else: ?>
                       <small class="text-muted">

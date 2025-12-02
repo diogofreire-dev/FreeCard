@@ -10,7 +10,7 @@ $errors = [];
 $success = false;
 
 // Buscar cartões do utilizador
-$stmt = $pdo->prepare("SELECT id, name, last4, limit_amount, balance FROM cards WHERE user_id = :uid AND active = 1 ORDER BY name");
+$stmt = $pdo->prepare("SELECT id, name, limit_amount, balance FROM cards WHERE user_id = :uid AND active = 1 ORDER BY name");
 $stmt->execute([':uid' => $uid]);
 $cards = $stmt->fetchAll();
 
@@ -425,7 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="">Nenhum / Dinheiro</option>
                     <?php foreach($cards as $c): ?>
                       <option value="<?=$c['id']?>" <?=($card_id ?? '') == $c['id'] ? 'selected' : ''?>>
-                        <?=htmlspecialchars($c['name'])?> (•••• <?=htmlspecialchars($c['last4'])?>)
+                        <?=htmlspecialchars($c['name'])?>
                         - Disponível: €<?=number_format($c['limit_amount'] - $c['balance'], 2)?>
                       </option>
                     <?php endforeach; ?>
@@ -477,7 +477,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <div class="mb-3 p-3 border rounded">
                     <div class="d-flex justify-content-between mb-2">
                       <strong class="small"><?=htmlspecialchars($c['name'])?></strong>
-                      <small class="text-muted">•••• <?=htmlspecialchars($c['last4'])?></small>
                     </div>
                     <div class="progress" style="height: 6px;">
                       <div class="progress-bar bg-<?=$percent >= 80 ? 'danger' : ($percent >= 60 ? 'warning' : 'success')?>" 

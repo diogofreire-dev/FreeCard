@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS cards (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   name VARCHAR(100) NOT NULL,        -- ex: "Cartão Visa"
-  last4 CHAR(4) NULL,                -- últimos 4 números
   limit_amount DECIMAL(10,2) DEFAULT 0,
   balance DECIMAL(10,2) DEFAULT 0,   -- usado para gerir saldo/consumo
   color VARCHAR(20) DEFAULT 'purple', -- cor do cartão
@@ -49,9 +48,9 @@ CREATE TABLE IF NOT EXISTS user_settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- substitui user_id por um id válido (ex.: 1)
-INSERT INTO cards (user_id, name, last4, limit_amount, balance, color) VALUES
-(1, 'Visa Principal', '1234', 1500.00, 300.00, 'purple'),
-(1, 'Mastercard Secundário', '9876', 1000.00, 50.00, 'blue');
+INSERT INTO cards (user_id, name, limit_amount, balance, color) VALUES
+(1, 'Visa Principal', 1500.00, 300.00, 'purple'),
+(1, 'Mastercard Secundário', 1000.00, 50.00, 'blue');
 
 INSERT INTO transactions (user_id, card_id, amount, description, category, created_at) VALUES
 (1, 1, 45.60, 'Café e snack', 'Alimentação', NOW() - INTERVAL 2 DAY),
@@ -67,13 +66,13 @@ SELECT COUNT(*) AS cnt
 FROM transactions
 WHERE user_id = :uid AND created_at >= NOW() - INTERVAL 30 DAY;
 
-SELECT t.*, c.name AS card_name, c.last4
+SELECT t.*, c.name AS card_name
 FROM transactions t
 LEFT JOIN cards c ON c.id = t.card_id
 WHERE t.user_id = :uid
 ORDER BY t.created_at DESC
 LIMIT 8;
 
-SELECT id, name, last4, limit_amount, balance, color, active
+SELECT id, name, limit_amount, balance, color, active
 FROM cards
 WHERE user_id = :uid;

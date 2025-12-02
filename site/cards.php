@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
 
 // Buscar todos os cartões com estatísticas
 $stmt = $pdo->prepare("
-    SELECT c.*, 
+    SELECT c.id, c.name, c.color, c.limit_amount, c.balance, c.active, c.created_at,
            COALESCE(SUM(t.amount), 0) as total_spent,
            COUNT(t.id) as transaction_count
     FROM cards c
@@ -303,7 +303,7 @@ $activeCards = count(array_filter($cards, fn($c) => $c['active']));
                   <div class="mb-2">
                     <i class="bi bi-credit-card" style="font-size: 28px;"></i>
                   </div>
-                  <div class="card-number">•••• •••• •••• <?=htmlspecialchars($c['last4'])?></div>
+                  <div class="card-number">•••• •••• •••• ••••</div>
                 </div>
                 <div>
                   <div class="card-name"><?=htmlspecialchars($c['name'])?></div>

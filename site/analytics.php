@@ -22,7 +22,7 @@ $stmt->execute([':uid' => $uid]);
 $availableYears = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Buscar cartões
-$stmt = $pdo->prepare("SELECT id, name, last4 FROM cards WHERE user_id = :uid ORDER BY name");
+$stmt = $pdo->prepare("SELECT id, name FROM cards WHERE user_id = :uid ORDER BY name");
 $stmt->execute([':uid' => $uid]);
 $cards = $stmt->fetchAll();
 
@@ -415,8 +415,8 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
           <select name="card_id" class="form-select">
             <option value="">Todos os cartões</option>
             <?php foreach($cards as $c): ?>
-              <option value="<?=$c['id']?>" <?=$card_id == $c['id'] ? 'selected' : ''?>>
-                <?=htmlspecialchars($c['name'])?> (<?=$c['last4']?>)
+            <option value="<?=$c['id']?>" <?=$card_id == $c['id'] ? 'selected' : ''?>>
+                <?=htmlspecialchars($c['name'])?>
               </option>
             <?php endforeach; ?>
           </select>
@@ -485,9 +485,9 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
           </h5>
           <?php
           $stmtCardSpending = $pdo->prepare("
-            SELECT c.name, c.last4, COALESCE(SUM(t.amount), 0) as total
+            SELECT c.name, COALESCE(SUM(t.amount), 0) as total
             FROM cards c
-            LEFT JOIN transactions t ON t.card_id = c.id 
+            LEFT JOIN transactions t ON t.card_id = c.id
               AND YEAR(t.created_at) = :year
               " . ($card_id ? "AND c.id = :cid" : "") . "
             WHERE c.user_id = :uid
@@ -531,10 +531,10 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
           <div class="scrollable-list" style="max-height: 350px; overflow-y: auto;">
             <?php
             $stmtTopTransactions = $pdo->prepare("
-              SELECT t.*, c.name as card_name, c.last4
+              SELECT t.*, c.name as card_name
               FROM transactions t
               LEFT JOIN cards c ON c.id = t.card_id
-              WHERE t.user_id = :uid 
+              WHERE t.user_id = :uid
               AND YEAR(t.created_at) = :year
               " . ($card_id ? "AND t.card_id = :cid" : "") . "
               ORDER BY t.amount DESC
@@ -577,7 +577,7 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
                       <?php endif; ?>
                       <?php if($topT['card_name']): ?>
                         <small class="text-muted">
-                          <i class="bi bi-credit-card"></i> <?=htmlspecialchars($topT['card_name'])?> (<?=htmlspecialchars($topT['last4'])?>)
+                          <i class="bi bi-credit-card"></i> <?=htmlspecialchars($topT['card_name'])?>
                         </small>
                       <?php endif; ?>
                       <small class="text-muted">
@@ -751,7 +751,7 @@ const lineChart = new Chart(ctx, {
 
 <?php
 $cardLabels = array_map(function($c) {
-  return $c['name'] . ' (' . $c['last4'] . ')';
+  return $c['name'];
 }, $cardSpending);
 $cardData = array_map(function($c) {
   return floatval($c['total']);

@@ -50,7 +50,6 @@ $cardStats = $stmt->fetch();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
-    $last4 = trim($_POST['last4'] ?? '');
     $limit = floatval($_POST['limit_amount'] ?? 0);
     $balance = floatval($_POST['balance'] ?? 0);
     $color = $_POST['color'] ?? 'purple';
@@ -61,9 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validações
     if (strlen($name) < 3) {
         $errors[] = 'O nome do cartão deve ter pelo menos 3 caracteres.';
-    }
-    if (!preg_match('/^\d{4}$/', $last4)) {
-        $errors[] = 'Os últimos 4 dígitos devem ser numéricos.';
     }
     if ($limit < 0) {
         $errors[] = 'O limite não pode ser negativo.';
@@ -81,14 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $stmt = $pdo->prepare("
-                UPDATE cards 
-                SET name = :name, last4 = :last4, limit_amount = :limit, 
+                UPDATE cards
+                SET name = :name, limit_amount = :limit,
                     balance = :balance, color = :color, active = :active
                 WHERE id = :id AND user_id = :uid
             ");
             $stmt->execute([
                 ':name' => $name,
-                ':last4' => $last4,
                 ':limit' => $limit,
                 ':balance' => $balance,
                 ':color' => $color,
@@ -96,12 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':id' => $card_id,
                 ':uid' => $uid
             ]);
-            
+
             $success = true;
-            
+
             // Atualizar os dados do cartão para mostrar os novos valores
             $card['name'] = $name;
-            $card['last4'] = $last4;
             $card['limit_amount'] = $limit;
             $card['balance'] = $balance;
             $card['color'] = $color;
@@ -325,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <div class="mb-3">
                     <i class="bi bi-credit-card" style="font-size: 32px;"></i>
                   </div>
-                  <div class="card-number" id="preview-number">•••• •••• •••• <?=htmlspecialchars($card['last4'])?></div>
+                  <div class="card-number" id="preview-number">•••• •••• •••• ••••</div>
                 </div>
                 <div>
                   <div class="card-name" id="preview-name"><?=strtoupper(htmlspecialchars($card['name']))?></div>
@@ -435,21 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <small class="text-muted mt-2 d-block">Escolhe uma cor para identificar facilmente o teu cartão</small>
                 </div>
 
-                <div class="mb-3">
-                  <label class="form-label">Últimos 4 Dígitos *</label>
-                  <input 
-                    type="text" 
-                    name="last4" 
-                    id="cardLast4"
-                    class="form-control" 
-                    placeholder="1234"
-                    maxlength="4"
-                    pattern="\d{4}"
-                    value="<?=htmlspecialchars($card['last4'])?>" 
-                    required
-                  >
-                  <small class="text-muted">Apenas os últimos 4 números do cartão</small>
-                </div>
+
 
                 <div class="row">
                   <div class="col-md-6 mb-3">
@@ -526,10 +506,7 @@ document.getElementById('cardName').addEventListener('input', function(e) {
   document.getElementById('preview-name').textContent = name.toUpperCase();
 });
 
-document.getElementById('cardLast4').addEventListener('input', function(e) {
-  const last4 = e.target.value || '••••';
-  document.getElementById('preview-number').textContent = `•••• •••• •••• ${last4}`;
-});
+
 
 document.getElementById('cardLimit').addEventListener('input', updateUsage);
 document.getElementById('cardBalance').addEventListener('input', updateUsage);

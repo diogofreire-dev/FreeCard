@@ -23,7 +23,6 @@ $cardColors = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
-    $last4 = trim($_POST['last4'] ?? '');
     $limit = floatval($_POST['limit_amount'] ?? 0);
     $balance = floatval($_POST['balance'] ?? 0);
     $color = $_POST['color'] ?? 'purple';
@@ -31,9 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validações
     if (strlen($name) < 3) {
         $errors[] = 'O nome do cartão deve ter pelo menos 3 caracteres.';
-    }
-    if (!preg_match('/^\d{4}$/', $last4)) {
-        $errors[] = 'Os últimos 4 dígitos devem ser numéricos.';
     }
     if ($limit < 0) {
         $errors[] = 'O limite não pode ser negativo.';
@@ -51,21 +47,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO cards (user_id, name, last4, limit_amount, balance, active, color) 
-                VALUES (:uid, :name, :last4, :limit, :balance, 1, :color)
+                INSERT INTO cards (user_id, name, limit_amount, balance, active, color)
+                VALUES (:uid, :name, :limit, :balance, 1, :color)
             ");
             $stmt->execute([
                 ':uid' => $uid,
                 ':name' => $name,
-                ':last4' => $last4,
                 ':limit' => $limit,
                 ':balance' => $balance,
                 ':color' => $color
             ]);
             $success = true;
-            
+
             // Limpar campos após sucesso
-            $name = $last4 = '';
+            $name = '';
             $limit = $balance = 0;
             $color = 'purple';
         } catch (PDOException $e) {
@@ -365,21 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <small class="text-muted mt-2 d-block">Escolhe uma cor para identificar facilmente o teu cartão</small>
                 </div>
 
-                <div class="mb-3">
-                  <label class="form-label">Últimos 4 Dígitos *</label>
-                  <input 
-                    type="text" 
-                    name="last4" 
-                    id="cardLast4"
-                    class="form-control" 
-                    placeholder="1234"
-                    maxlength="4"
-                    pattern="\d{4}"
-                    value="<?=htmlspecialchars($last4 ?? '')?>" 
-                    required
-                  >
-                  <small class="text-muted">Apenas os últimos 4 números do cartão</small>
-                </div>
+
 
                 <div class="row">
                   <div class="col-md-6 mb-3">
@@ -439,10 +420,7 @@ document.getElementById('cardName').addEventListener('input', function(e) {
   document.getElementById('preview-name').textContent = name.toUpperCase();
 });
 
-document.getElementById('cardLast4').addEventListener('input', function(e) {
-  const last4 = e.target.value || '••••';
-  document.getElementById('preview-number').textContent = `•••• •••• •••• ${last4}`;
-});
+
 
 document.getElementById('cardLimit').addEventListener('input', updateUsage);
 document.getElementById('cardBalance').addEventListener('input', updateUsage);

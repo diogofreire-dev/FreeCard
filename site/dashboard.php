@@ -92,11 +92,11 @@ $last7Days = $stmt->fetchAll();
 
 // Últimos registos
 $stmt = $pdo->prepare("
-    SELECT t.*, c.name AS card_name, c.last4 
-    FROM transactions t 
-    LEFT JOIN cards c ON c.id = t.card_id 
-    WHERE t.user_id = :uid 
-    ORDER BY t.created_at DESC 
+    SELECT t.*, c.name AS card_name
+    FROM transactions t
+    LEFT JOIN cards c ON c.id = t.card_id
+    WHERE t.user_id = :uid
+    ORDER BY t.created_at DESC
     LIMIT 8
 ");
 $stmt->execute([':uid' => $uid]);
@@ -104,8 +104,8 @@ $recent = $stmt->fetchAll();
 
 // Cartões
 $stmt = $pdo->prepare("
-    SELECT id, name, last4, limit_amount, balance, active 
-    FROM cards 
+    SELECT id, name, limit_amount, balance, active
+    FROM cards
     WHERE user_id = :uid
 ");
 $stmt->execute([':uid' => $uid]);
@@ -117,7 +117,7 @@ foreach ($cards as $card) {
     if ($card['limit_amount'] > 0) {
         $pct = ($card['balance'] / $card['limit_amount']) * 100;
         if ($pct >= 80) {
-            $alerts[] = "Cartão {$card['name']} ({$card['last4']}) atingiu " . round($pct) . "% do limite.";
+            $alerts[] = "Cartão {$card['name']} atingiu " . round($pct) . "% do limite.";
         }
     }
 }
@@ -445,8 +445,7 @@ $categoryColors = [
               <div class="mb-3 p-3 border rounded">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <strong><?=htmlspecialchars($c['name'])?></strong><br>
-                    <small class="text-muted">•••• <?=htmlspecialchars($c['last4'])?></small>
+                    <strong><?=htmlspecialchars($c['name'])?></strong>
                   </div>
                   <span class="badge bg-<?=$c['active'] ? 'success' : 'secondary'?>">
                     <?=$c['active'] ? 'Ativo' : 'Inativo'?>
@@ -591,7 +590,7 @@ $categoryColors = [
                       <?php if($r['card_name']): ?>
                         <small class="text-muted">
                           <i class="bi bi-credit-card"></i>
-                          <?=htmlspecialchars($r['card_name'])?> (<?=htmlspecialchars($r['last4'])?>)
+                          <?=htmlspecialchars($r['card_name'])?>
                         </small>
                       <?php endif; ?>
                     </div>

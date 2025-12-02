@@ -28,7 +28,7 @@ if (!$transaction) {
 }
 
 // Buscar cartões do utilizador
-$stmt = $pdo->prepare("SELECT id, name, last4, limit_amount, balance FROM cards WHERE user_id = :uid AND active = 1 ORDER BY name");
+$stmt = $pdo->prepare("SELECT id, name, limit_amount, balance FROM cards WHERE user_id = :uid AND active = 1 ORDER BY name");
 $stmt->execute([':uid' => $uid]);
 $cards = $stmt->fetchAll();
 
@@ -469,7 +469,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="" <?=!$transaction['card_id'] ? 'selected' : ''?>>Nenhum / Dinheiro</option>
                     <?php foreach($cards as $c): ?>
                       <option value="<?=$c['id']?>" <?=($transaction['card_id'] ?? '') == $c['id'] ? 'selected' : ''?>>
-                        <?=htmlspecialchars($c['name'])?> (•••• <?=htmlspecialchars($c['last4'])?>)
+                        <?=htmlspecialchars($c['name'])?>
                         - Disponível: €<?=number_format($c['limit_amount'] - $c['balance'], 2)?>
                       </option>
                     <?php endforeach; ?>
