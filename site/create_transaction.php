@@ -439,7 +439,7 @@ if (!isset($transaction_date)) {
                   <button type="submit" class="btn btn-primary btn-lg">
                     <i class="bi bi-check-circle"></i> Registar Transação
                   </button>
-                  <a href="dashboard.php" class="btn btn-outline-secondary">
+                  <a href="transactions.php" class="btn btn-outline-secondary">
                     Cancelar
                   </a>
                 </div>
