@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description'] ?? '');
     $category = trim($_POST['category'] ?? '');
     $card_id = !empty($_POST['card_id']) ? intval($_POST['card_id']) : null;
+    $transaction_date = trim($_POST['transaction_date'] ?? '');
 
     // Validações
     if ($amount <= 0) {
@@ -38,6 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (strlen($description) < 3) {
         $errors[] = 'A descrição deve ter pelo menos 3 caracteres.';
+    }
+    if (empty($transaction_date)) {
+        $errors[] = 'A data da transação é obrigatória.';
+    } else {
+        // Validar formato da data
+        $date = DateTime::createFromFormat('Y-m-d', $transaction_date);
+        if (!$date || $date->format('Y-m-d') !== $transaction_date) {
+            $errors[] = 'Data inválida.';
+        }
+        // Não permitir datas futuras
+        if ($date > new DateTime()) {
+            $errors[] = 'A data da transação não pode ser no futuro.';
+        }
     }
 
     // Verificar se o cartão tem limite disponível
@@ -60,15 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Inserir transação
             $stmt = $pdo->prepare("
-                INSERT INTO transactions (user_id, card_id, amount, description, category, created_at) 
-                VALUES (:uid, :cid, :amt, :desc, :cat, NOW())
+                INSERT INTO transactions (user_id, card_id, amount, description, category, transaction_date, created_at) 
+                VALUES (:uid, :cid, :amt, :desc, :cat, :tdate, NOW())
             ");
             $stmt->execute([
                 ':uid' => $uid,
                 ':cid' => $card_id,
                 ':amt' => $amount,
                 ':desc' => $description,
-                ':cat' => $category ?: null
+                ':cat' => $category ?: null,
+                ':tdate' => $transaction_date
             ]);
 
             // Se tiver cartão associado, atualizar o saldo
@@ -88,11 +103,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $amount = 0;
             $description = $category = '';
             $card_id = null;
+            $transaction_date = date('Y-m-d'); // Reset para hoje
         } catch (PDOException $e) {
             $pdo->rollBack();
             $errors[] = 'Erro ao criar transação. Tenta novamente.';
         }
     }
+}
+
+// Data padrão (hoje)
+if (!isset($transaction_date)) {
+    $transaction_date = date('Y-m-d');
 }
 ?>
 <!doctype html>
@@ -191,30 +212,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      aspect-ratio: 1; /* Força o elemento a ser quadrado */
-      min-height: 0; /* Remove altura mínima */
+      aspect-ratio: 1;
+      min-height: 0;
     }
-
     .category-option:hover {
       border-color: var(--primary-green);
       transform: translateY(-2px);
       box-shadow: 0 4px 12px var(--shadow);
     }
-
     .category-option input[type="radio"] {
       display: none;
     }
-
     .category-option input[type="radio"]:checked + .category-content {
       color: var(--primary-green);
     }
-
     .category-option input[type="radio"]:checked ~ .category-option,
     .category-option.selected {
       border-color: var(--primary-green);
       background: rgba(46, 204, 113, 0.05);
     }
-
     .category-content {
       display: flex;
       flex-direction: column;
@@ -223,7 +239,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 100%;
       gap: 8px;
     }
-
     .category-icon {
       font-size: 32px;
       margin-bottom: 0;
@@ -231,7 +246,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       justify-content: center;
     }
-
     .category-content small {
       font-size: 13px;
       font-weight: 600;
@@ -239,63 +253,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       line-height: 1.2;
       display: block;
     }
-
-    /* Grid das categorias */
     .row.g-2 {
       --bs-gutter-x: 0.5rem;
       --bs-gutter-y: 0.5rem;
     }
-
-    /* Garantir que todos têm o mesmo tamanho */
     .col-6.col-md-3 {
       display: flex;
     }
-
     .category-option {
       width: 100%;
     }
-
-    /* Ajuste específico para tema escuro */
     [data-theme="dark"] .category-option {
       border-color: var(--border-color);
       background: var(--bg-secondary);
     }
-
     [data-theme="dark"] .category-option:hover {
       border-color: var(--primary-green);
       background: var(--bg-hover);
     }
-    .category-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-    .summary-box {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 16px;
-      padding: 24px;
-      color: white;
-    }
-    .summary-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-    }
-    .summary-item:last-child {
-      border-bottom: none;
-    }
-    
-    /* Tema escuro */
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
-    [data-theme="dark"] .form-control::placeholder,
-    [data-theme="dark"] .amount-input::placeholder {
+    [data-theme="dark"] .form-control::placeholder {
       color: var(--text-secondary);
       opacity: 0.7;
     }
     [data-theme="dark"] .border {
       border-color: var(--border-color) !important;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0);
+    }
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
     }
   </style>
 </head>
@@ -374,6 +364,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
               <form method="post">
                 <div class="mb-4">
+                  <label class="form-label">Data da Transação *</label>
+                  <input 
+                    type="date" 
+                    name="transaction_date" 
+                    class="form-control" 
+                    value="<?=htmlspecialchars($transaction_date)?>"
+                    max="<?=date('Y-m-d')?>"
+                    required
+                  >
+                  <small class="text-muted">Quando é que esta despesa ocorreu realmente?</small>
+                </div>
+
+                <div class="mb-4">
                   <label class="form-label text-center w-100">Valor da Transação (€) *</label>
                   <input 
                     type="number" 
@@ -384,7 +387,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     min="0.01"
                     value="<?=htmlspecialchars($amount ?? '')?>" 
                     required
-                    autofocus
                   >
                 </div>
 
@@ -450,6 +452,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="card">
             <div class="card-body p-4">
               <h5 class="mb-4"><i class="bi bi-info-circle"></i> Dicas</h5>
+              
+              <div class="mb-3">
+                <h6><i class="bi bi-calendar-event text-info"></i> Data da transação</h6>
+                <p class="text-muted small mb-0">Escolhe a data em que a despesa ocorreu. Podes adicionar transações passadas.</p>
+              </div>
               
               <div class="mb-3">
                 <h6><i class="bi bi-lightbulb text-warning"></i> Organiza melhor</h6>

@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description'] ?? '');
     $category = trim($_POST['category'] ?? '');
     $card_id = !empty($_POST['card_id']) ? intval($_POST['card_id']) : null;
+    $transaction_date = trim($_POST['transaction_date'] ?? '');
     
     $old_amount = $transaction['amount'];
     $old_card_id = $transaction['card_id'];
@@ -59,6 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (strlen($description) < 3) {
         $errors[] = 'A descrição deve ter pelo menos 3 caracteres.';
+    }
+    if (empty($transaction_date)) {
+        $errors[] = 'A data da transação é obrigatória.';
+    } else {
+        // Validar formato da data
+        $date = DateTime::createFromFormat('Y-m-d', $transaction_date);
+        if (!$date || $date->format('Y-m-d') !== $transaction_date) {
+            $errors[] = 'Data inválida.';
+        }
+        // Não permitir datas futuras
+        if ($date > new DateTime()) {
+            $errors[] = 'A data da transação não pode ser no futuro.';
+        }
     }
 
     // Verificar se o cartão tem limite disponível (se mudou)
@@ -92,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Atualizar a transação
             $stmt = $pdo->prepare("
                 UPDATE transactions 
-                SET amount = :amt, description = :desc, category = :cat, card_id = :cid
+                SET amount = :amt, description = :desc, category = :cat, card_id = :cid, transaction_date = :tdate
                 WHERE id = :id AND user_id = :uid
             ");
             $stmt->execute([
@@ -100,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':desc' => $description,
                 ':cat' => $category ?: null,
                 ':cid' => $card_id,
+                ':tdate' => $transaction_date,
                 ':id' => $transaction_id,
                 ':uid' => $uid
             ]);
@@ -133,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $transaction['description'] = $description;
             $transaction['category'] = $category;
             $transaction['card_id'] = $card_id;
+            $transaction['transaction_date'] = $transaction_date;
         } catch (PDOException $e) {
             $pdo->rollBack();
             $errors[] = 'Erro ao atualizar transação. Tenta novamente.';
@@ -236,30 +252,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      aspect-ratio: 1; /* Força o elemento a ser quadrado */
-      min-height: 0; /* Remove altura mínima */
+      aspect-ratio: 1;
+      min-height: 0;
     }
-
     .category-option:hover {
       border-color: var(--primary-green);
       transform: translateY(-2px);
       box-shadow: 0 4px 12px var(--shadow);
     }
-
     .category-option input[type="radio"] {
       display: none;
     }
-
     .category-option input[type="radio"]:checked + .category-content {
       color: var(--primary-green);
     }
-
     .category-option input[type="radio"]:checked ~ .category-option,
     .category-option.selected {
       border-color: var(--primary-green);
       background: rgba(46, 204, 113, 0.05);
     }
-
     .category-content {
       display: flex;
       flex-direction: column;
@@ -268,7 +279,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 100%;
       gap: 8px;
     }
-
     .category-icon {
       font-size: 32px;
       margin-bottom: 0;
@@ -276,7 +286,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       justify-content: center;
     }
-
     .category-content small {
       font-size: 13px;
       font-weight: 600;
@@ -284,35 +293,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       line-height: 1.2;
       display: block;
     }
-
-    /* Grid das categorias */
     .row.g-2 {
       --bs-gutter-x: 0.5rem;
       --bs-gutter-y: 0.5rem;
     }
-
-    /* Garantir que todos têm o mesmo tamanho */
     .col-6.col-md-3 {
       display: flex;
     }
-
     .category-option {
       width: 100%;
     }
-
-    /* Ajuste específico para tema escuro */
     [data-theme="dark"] .category-option {
       border-color: var(--border-color);
       background: var(--bg-secondary);
     }
-
     [data-theme="dark"] .category-option:hover {
       border-color: var(--primary-green);
       background: var(--bg-hover);
-    }
-    .category-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
     }
     .info-box {
       background: var(--bg-primary);
@@ -320,8 +317,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       padding: 16px;
       border-radius: 8px;
     }
-    
-    /* Tema escuro */
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
@@ -337,6 +332,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     [data-theme="dark"] .badge {
       background: var(--bg-hover) !important;
       color: var(--text-primary) !important;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0);
+    }
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
     }
   </style>
 </head>
@@ -409,14 +410,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="d-flex align-items-center gap-2">
                   <i class="bi bi-info-circle text-primary"></i>
                   <div>
-                    <strong>Data original:</strong> <?=date('d/m/Y H:i', strtotime($transaction['created_at']))?>
+                    <strong>Registo criado em:</strong> <?=date('d/m/Y H:i', strtotime($transaction['created_at']))?>
                     <br>
-                    <small class="text-muted">A data da transação não será alterada</small>
+                    <small class="text-muted">Esta informação não será alterada</small>
                   </div>
                 </div>
               </div>
 
               <form method="post">
+                <div class="mb-4">
+                  <label class="form-label">Data da Transação *</label>
+                  <input 
+                    type="date" 
+                    name="transaction_date" 
+                    class="form-control" 
+                    value="<?=htmlspecialchars($transaction['transaction_date'])?>"
+                    max="<?=date('Y-m-d')?>"
+                    required
+                  >
+                  <small class="text-muted">Quando é que esta despesa ocorreu realmente?</small>
+                </div>
+
                 <div class="mb-4">
                   <label class="form-label text-center w-100">Valor da Transação (€) *</label>
                   <input 
@@ -496,8 +510,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <h5 class="mb-4"><i class="bi bi-info-circle"></i> Informações</h5>
               
               <div class="mb-3">
-                <h6><i class="bi bi-calendar text-primary"></i> Data preservada</h6>
-                <p class="text-muted small mb-0">A data e hora originais da transação serão mantidas, mesmo após editar.</p>
+                <h6><i class="bi bi-clock-history text-primary"></i> Registo preservado</h6>
+                <p class="text-muted small mb-0">A data e hora em que criaste o registo são mantidas, mesmo após editar.</p>
+              </div>
+              
+              <div class="mb-3">
+                <h6><i class="bi bi-calendar-event text-info"></i> Data editável</h6>
+                <p class="text-muted small mb-0">Podes alterar a data em que a transação realmente ocorreu.</p>
               </div>
               
               <div class="mb-3">
@@ -515,6 +534,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <h6 class="mb-3">Dados Originais</h6>
               <div class="p-3 bg-light rounded">
                 <div class="mb-2">
+                  <small class="text-muted">Data da Transação</small>
+                  <div><?=date('d/m/Y', strtotime($transaction['transaction_date']))?></div>
+                </div>
+                <div class="mb-2">
                   <small class="text-muted">Valor</small>
                   <div class="fw-bold text-danger">€<?=number_format($transaction['amount'], 2)?></div>
                 </div>
@@ -529,7 +552,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <?php endif; ?>
                 <div>
-                  <small class="text-muted">Data</small>
+                  <small class="text-muted">Registo criado em</small>
                   <div><?=date('d/m/Y H:i', strtotime($transaction['created_at']))?></div>
                 </div>
               </div>
