@@ -20,27 +20,16 @@ $cardColors = [
     'teal' => 'linear-gradient(135deg, #00BCD4 0%, #00BCD4 100%)',
     'indigo' => 'linear-gradient(135deg, #3F51B5 0%, #3F51B5 100%)'
 ];
-// Ações: ativar/desativar/eliminar
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
+
+// Ação: ativar/desativar
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST['action'] === 'toggle') {
     $cardId = intval($_POST['card_id'] ?? 0);
-    $action = $_POST['action'];
 
     try {
-        switch($action) {
-            case 'toggle':
-                $stmt = $pdo->prepare("UPDATE cards SET active = NOT active WHERE id = :id AND user_id = :uid");
-                $stmt->execute([':id' => $cardId, ':uid' => $uid]);
-                $message = 'Estado do cartão alterado com sucesso!';
-                $messageType = 'success';
-                break;
-            
-            case 'delete':
-                $stmt = $pdo->prepare("DELETE FROM cards WHERE id = :id AND user_id = :uid");
-                $stmt->execute([':id' => $cardId, ':uid' => $uid]);
-                $message = 'Cartão eliminado com sucesso!';
-                $messageType = 'success';
-                break;
-        }
+        $stmt = $pdo->prepare("UPDATE cards SET active = NOT active WHERE id = :id AND user_id = :uid");
+        $stmt->execute([':id' => $cardId, ':uid' => $uid]);
+        $message = 'Estado do cartão alterado com sucesso!';
+        $messageType = 'success';
     } catch (PDOException $e) {
         $message = 'Erro ao executar a ação.';
         $messageType = 'danger';
@@ -59,12 +48,25 @@ $stmt = $pdo->prepare("
     ORDER BY c.active DESC, c.created_at DESC
 ");
 $stmt->execute([':uid' => $uid]);
-$cards = $stmt->fetchAll();
+$allCards = $stmt->fetchAll();
+
+// Separar cartões ativos e inativos
+$activeCards = array_filter($allCards, fn($c) => $c['active']);
+$inactiveCards = array_filter($allCards, fn($c) => !$c['active']);
 
 // Estatísticas gerais
-$totalLimit = array_sum(array_column($cards, 'limit_amount'));
-$totalBalance = array_sum(array_column($cards, 'balance'));
-$activeCards = count(array_filter($cards, fn($c) => $c['active']));
+$totalLimit = array_sum(array_column($allCards, 'limit_amount'));
+$totalBalance = array_sum(array_column($allCards, 'balance'));
+
+// Estatísticas para cartões ativos
+$activeTotalLimit = array_sum(array_column($activeCards, 'limit_amount'));
+$activeTotalBalance = array_sum(array_column($activeCards, 'balance'));
+$activeAvailable = $activeTotalLimit - $activeTotalBalance;
+
+// Estatísticas para cartões inativos
+$inactiveTotalLimit = array_sum(array_column($inactiveCards, 'limit_amount'));
+$inactiveTotalBalance = array_sum(array_column($inactiveCards, 'balance'));
+$inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
 ?>
 <!doctype html>
 <html lang="pt-PT" data-theme="<?=$currentTheme?>">
@@ -181,6 +183,22 @@ $activeCards = count(array_filter($cards, fn($c) => $c['active']));
       border-right: 1px solid var(--border-color);
     }
     
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .section-header h3 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+    
     /* Tema escuro */
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
@@ -259,125 +277,232 @@ $activeCards = count(array_filter($cards, fn($c) => $c['active']));
     </div>
   <?php endif; ?>
 
-  <?php if (!empty($cards)): ?>
-    <!-- Estatísticas -->
-    <div class="summary-card mb-4">
-      <div class="row">
-        <div class="col-4">
-          <div class="stat-item">
-            <h3><?=count($cards)?></h3>
-            <p>Total de Cartões</p>
-          </div>
+  <?php if (!empty($allCards)): ?>
+    <!-- Cartões Ativos -->
+    <?php if (!empty($activeCards)): ?>
+      <!-- Estatísticas Cartões Ativos -->
+      <div class="summary-card mb-4">
+        <div class="section-header mb-3">
+          <h3><i class="bi bi-check-circle-fill text-success"></i> Cartões Ativos</h3>
         </div>
-        <div class="col-4">
-          <div class="stat-item">
-            <h3 style="color: #3498db;">€<?=number_format($totalLimit, 2)?></h3>
-            <p>Limite Total</p>
+        <div class="row">
+          <div class="col-4">
+            <div class="stat-item">
+              <h3 style="color: #3498db;">€<?=number_format($activeTotalLimit, 2)?></h3>
+              <p>Limite Total</p>
+            </div>
           </div>
-        </div>
-        <div class="col-4">
-          <div class="stat-item">
-            <h3 class="text-success">€<?=number_format($totalLimit - $totalBalance, 2)?></h3>
-            <p>Disponível</p>
+          <div class="col-4">
+            <div class="stat-item">
+              <h3 class="text-danger">€<?=number_format($activeTotalBalance, 2)?></h3>
+              <p>Gasto Atual</p>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cartões -->
-    <div class="row g-4">
-      <?php foreach($cards as $c): ?>
-        <?php 
-          $percentage = $c['limit_amount'] > 0 ? ($c['balance'] / $c['limit_amount']) * 100 : 0;
-          $progressColor = $percentage >= 80 ? 'danger' : ($percentage >= 60 ? 'warning' : 'success');
-          $available = $c['limit_amount'] - $c['balance'];
-          $cardColor = $c['color'] ?? 'purple';
-          $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
-        ?>
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card h-100">
-            <div class="card-body p-4">
-              <!-- Card Visual -->
-              <div class="card-visual <?=$c['active'] ? '' : 'card-visual-inactive'?> mb-3" style="background: <?=$gradient?>;">
-                <div>
-                  <div class="mb-2">
-                    <i class="bi bi-credit-card" style="font-size: 28px;"></i>
-                  </div>
-                  <div class="card-number">•••• •••• •••• ••••</div>
-                </div>
-                <div>
-                  <div class="card-name"><?=htmlspecialchars($c['name'])?></div>
-                  <div class="d-flex justify-content-between align-items-center mt-2">
-                    <small>FreeCard</small>
-                    <span class="badge bg-<?=$c['active'] ? 'light' : 'secondary'?> text-dark">
-                      <?=$c['active'] ? 'ATIVO' : 'INATIVO'?>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Informações -->
-              <div class="mb-3">
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Utilização do Limite</span>
-                  <span class="fw-bold small"><?=round($percentage)?>%</span>
-                </div>
-                <div class="progress" style="height: 10px; border-radius: 10px;">
-                  <div class="progress-bar bg-<?=$progressColor?>" style="width: <?=min($percentage, 100)?>%"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2">
-                  <small class="text-muted">€<?=number_format($c['balance'],2)?> usado</small>
-                  <small class="text-muted">€<?=number_format($c['limit_amount'],2)?> limite</small>
-                </div>
-              </div>
-
-              <div class="p-3 bg-light rounded mb-3">
-                <div class="row text-center">
-                  <div class="col-6 border-end">
-                    <div class="fw-bold text-success">€<?=number_format($available, 2)?></div>
-                    <small class="text-muted">Disponível</small>
-                  </div>
-                  <div class="col-6">
-                    <div class="fw-bold"><?=$c['transaction_count']?></div>
-                    <small class="text-muted">Transações</small>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Ações -->
-              <div class="d-flex gap-2 mb-2">
-                <a href="edit_card.php?id=<?=$c['id']?>" class="btn btn-sm btn-outline-primary flex-fill">
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                <form method="post" class="flex-fill">
-                  <input type="hidden" name="card_id" value="<?=$c['id']?>">
-                  <input type="hidden" name="action" value="toggle">
-                  <button type="submit" class="btn btn-sm btn-outline-primary w-100">
-                    <i class="bi bi-<?=$c['active'] ? 'pause-circle' : 'play-circle'?>"></i>
-                    <?=$c['active'] ? 'Desativar' : 'Ativar'?>
-                  </button>
-                </form>
-              </div>
-              <div class="d-grid">
-                <form method="post" onsubmit="return confirm('Tens a certeza que queres eliminar este cartão? Esta ação não pode ser revertida.');">
-                  <input type="hidden" name="card_id" value="<?=$c['id']?>">
-                  <input type="hidden" name="action" value="delete">
-                  <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                    <i class="bi bi-trash"></i> Eliminar
-                  </button>
-                </form>
-              </div>
-
-              <div class="text-center mt-3">
-                <small class="text-muted">
-                  <i class="bi bi-calendar"></i> Criado em <?=date('d/m/Y', strtotime($c['created_at']))?>
-                </small>
-              </div>
+          <div class="col-4">
+            <div class="stat-item">
+              <h3 class="text-success">€<?=number_format($activeAvailable, 2)?></h3>
+              <p>Disponível</p>
             </div>
           </div>
         </div>
-      <?php endforeach; ?>
-    </div>
+      </div>
+
+      <!-- Lista Cartões Ativos -->
+      <div class="row g-4 mb-5">
+        <?php foreach($activeCards as $c): ?>
+          <?php 
+            $percentage = $c['limit_amount'] > 0 ? ($c['balance'] / $c['limit_amount']) * 100 : 0;
+            $progressColor = $percentage >= 80 ? 'danger' : ($percentage >= 60 ? 'warning' : 'success');
+            $available = $c['limit_amount'] - $c['balance'];
+            $cardColor = $c['color'] ?? 'purple';
+            $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
+          ?>
+          <div class="col-12 col-md-6 col-xl-4">
+            <div class="card h-100">
+              <div class="card-body p-4">
+                <!-- Card Visual -->
+                <div class="card-visual mb-3" style="background: <?=$gradient?>;">
+                  <div>
+                    <div class="mb-2">
+                      <i class="bi bi-credit-card" style="font-size: 28px;"></i>
+                    </div>
+                    <div class="card-number">•••• •••• •••• ••••</div>
+                  </div>
+                  <div>
+                    <div class="card-name"><?=htmlspecialchars($c['name'])?></div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                      <small>FreeCard</small>
+                      <span class="badge bg-success text-white">ATIVO</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Informações -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Utilização do Limite</span>
+                    <span class="fw-bold small"><?=round($percentage)?>%</span>
+                  </div>
+                  <div class="progress" style="height: 10px; border-radius: 10px;">
+                    <div class="progress-bar bg-<?=$progressColor?>" style="width: <?=min($percentage, 100)?>%"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-2">
+                    <small class="text-muted">€<?=number_format($c['balance'],2)?> usado</small>
+                    <small class="text-muted">€<?=number_format($c['limit_amount'],2)?> limite</small>
+                  </div>
+                </div>
+
+                <div class="p-3 bg-light rounded mb-3">
+                  <div class="row text-center">
+                    <div class="col-6 border-end">
+                      <div class="fw-bold text-success">€<?=number_format($available, 2)?></div>
+                      <small class="text-muted">Disponível</small>
+                    </div>
+                    <div class="col-6">
+                      <div class="fw-bold"><?=$c['transaction_count']?></div>
+                      <small class="text-muted">Transações</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ações -->
+                <div class="d-flex gap-2 mb-2">
+                  <a href="edit_card.php?id=<?=$c['id']?>" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  <form method="post" class="flex-fill">
+                    <input type="hidden" name="card_id" value="<?=$c['id']?>">
+                    <input type="hidden" name="action" value="toggle">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                      <i class="bi bi-pause-circle"></i> Desativar
+                    </button>
+                  </form>
+                </div>
+
+                <div class="text-center mt-3">
+                  <small class="text-muted">
+                    <i class="bi bi-calendar"></i> Criado em <?=date('d/m/Y', strtotime($c['created_at']))?>
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+    <!-- Cartões Inativos -->
+    <?php if (!empty($inactiveCards)): ?>
+      <!-- Estatísticas Cartões Inativos -->
+      <div class="summary-card mb-4">
+        <div class="section-header mb-3">
+          <h3><i class="bi bi-pause-circle-fill text-secondary"></i> Cartões Inativos</h3>
+        </div>
+        <div class="row">
+          <div class="col-4">
+            <div class="stat-item">
+              <h3 style="color: #3498db;">€<?=number_format($inactiveTotalLimit, 2)?></h3>
+              <p>Limite Total</p>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-item">
+              <h3 class="text-danger">€<?=number_format($inactiveTotalBalance, 2)?></h3>
+              <p>Gasto Atual</p>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-item">
+              <h3 class="text-success">€<?=number_format($inactiveAvailable, 2)?></h3>
+              <p>Disponível</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista Cartões Inativos -->
+      <div class="row g-4">
+        <?php foreach($inactiveCards as $c): ?>
+          <?php 
+            $percentage = $c['limit_amount'] > 0 ? ($c['balance'] / $c['limit_amount']) * 100 : 0;
+            $progressColor = $percentage >= 80 ? 'danger' : ($percentage >= 60 ? 'warning' : 'success');
+            $available = $c['limit_amount'] - $c['balance'];
+            $cardColor = $c['color'] ?? 'purple';
+            $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
+          ?>
+          <div class="col-12 col-md-6 col-xl-4">
+            <div class="card h-100">
+              <div class="card-body p-4">
+                <!-- Card Visual -->
+                <div class="card-visual card-visual-inactive mb-3" style="background: <?=$gradient?>;">
+                  <div>
+                    <div class="mb-2">
+                      <i class="bi bi-credit-card" style="font-size: 28px;"></i>
+                    </div>
+                    <div class="card-number">•••• •••• •••• ••••</div>
+                  </div>
+                  <div>
+                    <div class="card-name"><?=htmlspecialchars($c['name'])?></div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                      <small>FreeCard</small>
+                      <span class="badge bg-secondary text-white">INATIVO</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Informações -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Utilização do Limite</span>
+                    <span class="fw-bold small"><?=round($percentage)?>%</span>
+                  </div>
+                  <div class="progress" style="height: 10px; border-radius: 10px;">
+                    <div class="progress-bar bg-<?=$progressColor?>" style="width: <?=min($percentage, 100)?>%"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-2">
+                    <small class="text-muted">€<?=number_format($c['balance'],2)?> usado</small>
+                    <small class="text-muted">€<?=number_format($c['limit_amount'],2)?> limite</small>
+                  </div>
+                </div>
+
+                <div class="p-3 bg-light rounded mb-3">
+                  <div class="row text-center">
+                    <div class="col-6 border-end">
+                      <div class="fw-bold text-success">€<?=number_format($available, 2)?></div>
+                      <small class="text-muted">Disponível</small>
+                    </div>
+                    <div class="col-6">
+                      <div class="fw-bold"><?=$c['transaction_count']?></div>
+                      <small class="text-muted">Transações</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ações -->
+                <div class="d-flex gap-2 mb-2">
+                  <a href="edit_card.php?id=<?=$c['id']?>" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  <form method="post" class="flex-fill">
+                    <input type="hidden" name="card_id" value="<?=$c['id']?>">
+                    <input type="hidden" name="action" value="toggle">
+                    <button type="submit" class="btn btn-sm btn-outline-success w-100">
+                      <i class="bi bi-play-circle"></i> Ativar
+                    </button>
+                  </form>
+                </div>
+
+                <div class="text-center mt-3">
+                  <small class="text-muted">
+                    <i class="bi bi-calendar"></i> Criado em <?=date('d/m/Y', strtotime($c['created_at']))?>
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   <?php else: ?>
     <!-- Estado vazio -->
     <div class="card">
