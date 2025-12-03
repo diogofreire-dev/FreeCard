@@ -1,4 +1,4 @@
--- database/schema.sql
+DROP DATABASE IF EXISTS pap;
 CREATE DATABASE IF NOT EXISTS pap CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE pap;
 
