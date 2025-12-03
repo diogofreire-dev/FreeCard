@@ -2,6 +2,15 @@
 session_start();
 require_once __DIR__ . '/../config/db.php';
 
+function validatePassword($password) {
+    if (strlen($password) < 8) return false;
+    if (!preg_match('/[A-Z]/', $password)) return false;
+    if (!preg_match('/[a-z]/', $password)) return false;
+    if (!preg_match('/[0-9]/', $password)) return false;
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) return false;
+    return true;
+}
+
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -12,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($username === '' || strlen($username) < 3) $errors[] = 'Nome de utilizador inválido (mínimo 3 caracteres).';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email inválido.';
-    if (strlen($password) < 6) $errors[] = 'A palavra-passe deve ter pelo menos 6 caracteres.';
+    if (!validatePassword($password)) $errors[] = 'A palavra-passe deve ter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais.';
     if ($password !== $password2) $errors[] = 'As palavras-passe não coincidem.';
 
     if (empty($errors)) {
@@ -279,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="password-strength">
             <div class="password-strength-bar" id="strength-bar"></div>
           </div>
-          <small class="text-muted">Mínimo 6 caracteres</small>
+          <small class="text-muted">Mínimo 8 caracteres, incluindo maiúsculas, minúsculas, números e especiais</small>
         </div>
 
         <div class="mb-4">
@@ -322,9 +331,9 @@ document.getElementById('password').addEventListener('input', function(e) {
   const strengthBar = document.getElementById('strength-bar');
   
   let strength = 0;
-  if (password.length >= 6) strength++;
-  if (password.length >= 10) strength++;
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
+  if (password.length >= 8) strength++;
+  if (/[A-Z]/.test(password)) strength++;
+  if (/[a-z]/.test(password)) strength++;
   if (/[0-9]/.test(password)) strength++;
   if (/[^A-Za-z0-9]/.test(password)) strength++;
   
