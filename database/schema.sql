@@ -30,9 +30,12 @@ CREATE TABLE IF NOT EXISTS transactions (
   amount DECIMAL(10,2) NOT NULL,
   description VARCHAR(255),
   category VARCHAR(100) DEFAULT NULL,
+  transaction_date DATE NOT NULL,  -- NOVO CAMPO
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL,
+  INDEX idx_transaction_date (transaction_date),
+  INDEX idx_user_transaction_date (user_id, transaction_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS user_settings (

@@ -37,12 +37,12 @@ foreach ($categories as $cat) {
 
 $sql = "
     SELECT 
-        MONTH(created_at) as month,
+        MONTH(transaction_date) as month,
         COALESCE(category, 'Outros') as category,
         SUM(amount) as total
     FROM transactions 
     WHERE user_id = :uid 
-    AND YEAR(created_at) = :year
+    AND YEAR(transaction_date) = :year
 ";
 $params = [':uid' => $uid, ':year' => $year];
 
@@ -51,7 +51,7 @@ if ($card_id) {
     $params[':cid'] = $card_id;
 }
 
-$sql .= " GROUP BY MONTH(created_at), category";
+$sql .= " GROUP BY MONTH(transaction_date), category";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -77,7 +77,7 @@ $stmt = $pdo->prepare("
         COUNT(*) as count
     FROM transactions 
     WHERE user_id = :uid 
-    AND YEAR(created_at) = :year
+    AND YEAR(transaction_date) = :year
     " . ($card_id ? "AND card_id = :cid" : "") . "
     GROUP BY category
     ORDER BY total DESC
@@ -97,7 +97,7 @@ $stmt = $pdo->prepare("
         MIN(amount) as min_amount
     FROM transactions 
     WHERE user_id = :uid 
-    AND YEAR(created_at) = :year
+    AND YEAR(transaction_date) = :year
     " . ($card_id ? "AND card_id = :cid" : "")
 );
 $stmt->execute($params);
@@ -488,7 +488,7 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
             SELECT c.name, COALESCE(SUM(t.amount), 0) as total
             FROM cards c
             LEFT JOIN transactions t ON t.card_id = c.id
-              AND YEAR(t.created_at) = :year
+              AND YEAR(t.transaction_date) = :year
               " . ($card_id ? "AND c.id = :cid" : "") . "
             WHERE c.user_id = :uid
             GROUP BY c.id
@@ -535,7 +535,7 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
               FROM transactions t
               LEFT JOIN cards c ON c.id = t.card_id
               WHERE t.user_id = :uid
-              AND YEAR(t.created_at) = :year
+              AND YEAR(t.transaction_date) = :year
               " . ($card_id ? "AND t.card_id = :cid" : "") . "
               ORDER BY t.amount DESC
               LIMIT 5

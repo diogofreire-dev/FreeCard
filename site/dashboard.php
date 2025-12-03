@@ -16,7 +16,7 @@ $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(amount),0) AS total_month 
     FROM transactions 
     WHERE user_id = :uid 
-    AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    AND transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
 ");
 $stmt->execute([':uid' => $uid]);
 $totalMonth = $stmt->fetchColumn();
@@ -26,8 +26,8 @@ $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(amount),0) AS total_last_month 
     FROM transactions 
     WHERE user_id = :uid 
-    AND created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
-    AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    AND transaction_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+    AND transaction_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 ");
 $stmt->execute([':uid' => $uid]);
 $totalLastMonth = $stmt->fetchColumn();
@@ -43,7 +43,7 @@ $stmt = $pdo->prepare("
     SELECT COUNT(*) 
     FROM transactions 
     WHERE user_id = :uid 
-    AND created_at >= NOW() - INTERVAL 30 DAY
+    AND transaction_date >= NOW() - INTERVAL 30 DAY
 ");
 $stmt->execute([':uid' => $uid]);
 $count30 = $stmt->fetchColumn();
@@ -56,7 +56,7 @@ $stmt = $pdo->prepare("
         COUNT(*) as count
     FROM transactions 
     WHERE user_id = :uid 
-    AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    AND transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     GROUP BY category
     ORDER BY total DESC
 ");
@@ -68,7 +68,7 @@ $stmt = $pdo->prepare("
     SELECT description, amount, category
     FROM transactions 
     WHERE user_id = :uid 
-    AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+    AND transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     ORDER BY amount DESC
     LIMIT 1
 ");
@@ -83,7 +83,7 @@ $stmt = $pdo->prepare("
         COUNT(*) as count
     FROM transactions 
     WHERE user_id = :uid 
-    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
     GROUP BY DATE(created_at)
     ORDER BY day ASC
 ");
@@ -581,9 +581,6 @@ $categoryColors = [
                   <div class="flex-grow-1">
                     <div class="fw-semibold mb-1"><?=htmlspecialchars($r['description'] ?: '-')?></div>
                     <div class="d-flex gap-2 align-items-center flex-wrap">
-                      <small class="text-muted">
-                        <i class="bi bi-calendar"></i> <?=date('d/m/Y H:i', strtotime($r['created_at']))?>
-                      </small>
                       <?php if($r['category']): ?>
                         <span class="badge bg-info"><?=htmlspecialchars($r['category'])?></span>
                       <?php endif; ?>

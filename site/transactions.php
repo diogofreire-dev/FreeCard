@@ -89,11 +89,11 @@ if ($card_id) {
     $params[':cid'] = $card_id;
 }
 if ($month) {
-    $sql .= " AND DATE_FORMAT(t.created_at, '%Y-%m') = :month";
+    $sql .= " AND DATE_FORMAT(t.transaction_date, '%Y-%m') = :month";
     $params[':month'] = $month;
 }
 
-$sql .= " ORDER BY t.created_at DESC LIMIT 100";
+$sql .= " ORDER BY t.transaction_date DESC LIMIT 100";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -105,7 +105,7 @@ $total = array_sum(array_column($transactions, 'amount'));
 // Agrupar por dia
 $byDay = [];
 foreach ($transactions as $t) {
-    $day = date('Y-m-d', strtotime($t['created_at']));
+    $day = date('Y-m-d', strtotime($t['transaction_date']));
     if (!isset($byDay[$day])) {
         $byDay[$day] = [];
     }
@@ -470,7 +470,7 @@ foreach ($transactions as $t) {
                       </small>
                     <?php endif; ?>
                     <small class="text-muted">
-                      <i class="bi bi-clock"></i> <?=date('H:i', strtotime($t['created_at']))?>
+                        <i class="bi bi-calendar-event"></i> <?=date('d/m/Y', strtotime($t['transaction_date']))?>
                     </small>
                   </div>
                 </div>
