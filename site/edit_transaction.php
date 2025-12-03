@@ -144,11 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
             
             // Atualizar os dados da transação para mostrar os novos valores
-            $transaction['amount'] = $amount;
-            $transaction['description'] = $description;
-            $transaction['category'] = $category;
-            $transaction['card_id'] = $card_id;
-            $transaction['transaction_date'] = $transaction_date;
+            header('Location: transactions.php?success=transaction_updated');
+            exit;
         } catch (PDOException $e) {
             $pdo->rollBack();
             $errors[] = 'Erro ao atualizar transação. Tenta novamente.';

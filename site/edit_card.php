@@ -95,11 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
 
             // Atualizar os dados do cartão para mostrar os novos valores
-            $card['name'] = $name;
-            $card['limit_amount'] = $limit;
-            $card['balance'] = $balance;
-            $card['color'] = $color;
-            $card['active'] = $active;
+            header('Location: cards.php?success=card_updated');
+            exit;
         } catch (PDOException $e) {
             $errors[] = 'Erro ao atualizar cartão. Tenta novamente.';
         }

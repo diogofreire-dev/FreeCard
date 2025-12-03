@@ -60,9 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
 
             // Limpar campos após sucesso
-            $name = '';
-            $limit = $balance = 0;
-            $color = 'purple';
+            header('Location: cards.php?success=card_added');
+            exit;
         } catch (PDOException $e) {
             $errors[] = 'Erro ao adicionar cartão. Tenta novamente.';
         }

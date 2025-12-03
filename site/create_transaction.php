@@ -100,10 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
             
             // Limpar campos
-            $amount = 0;
-            $description = $category = '';
-            $card_id = null;
-            $transaction_date = date('Y-m-d'); // Reset para hoje
+            header('Location: transactions.php?success=transaction_added');
+            exit;
         } catch (PDOException $e) {
             $pdo->rollBack();
             $errors[] = 'Erro ao criar transação. Tenta novamente.';
