@@ -283,7 +283,7 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       <!-- Estatísticas Cartões Ativos -->
       <div class="summary-card mb-4">
         <div class="section-header mb-3">
-          <h3><i class="bi bi-check-circle-fill text-success"></i> Cartões Ativos</h3>
+          <h3><i class="text-success"></i> Cartões Ativos</h3>
         </div>
         <div class="row">
           <div class="col-4">
@@ -396,7 +396,7 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       <!-- Estatísticas Cartões Inativos -->
       <div class="summary-card mb-4">
         <div class="section-header mb-3">
-          <h3><i class="bi bi-pause-circle-fill text-secondary"></i> Cartões Inativos</h3>
+          <h3><i class="text-secondary"></i> Cartões Inativos</h3>
         </div>
         <div class="row">
           <div class="col-4">
