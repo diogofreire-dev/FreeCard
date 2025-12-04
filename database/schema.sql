@@ -17,8 +17,6 @@ CREATE TABLE IF NOT EXISTS cards (
   name VARCHAR(100) NOT NULL,        -- ex: "Cartão Visa"
   limit_amount DECIMAL(10,2) DEFAULT 0,
   balance DECIMAL(10,2) DEFAULT 0,
-  cashback_percentage DECIMAL(5,2) DEFAULT 0,
-  last_cashback_date DATE NULL,   -- usado para gerir saldo/consumo
   color VARCHAR(20) DEFAULT 'purple', -- cor do cartão
   active TINYINT(1) DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
