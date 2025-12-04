@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .register-container {
       min-width: 320px;     /* Mínimo 320px */
-      max-width: 500px;     /* Máximo 500px */
+      max-width: 450px;     /* Máximo 500px */
       width: 100%;          /* Responsivo entre min e max */
       margin: 0 auto;
       padding: 20px;
