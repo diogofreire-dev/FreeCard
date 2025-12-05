@@ -21,11 +21,37 @@ $cardColors = [
     'indigo' => ['name' => 'Índigo', 'gradient' => 'linear-gradient(135deg, #3F51B5 0%, #3F51B5 100%)']
 ];
 
+// Bancos disponíveis
+$banks = [
+    'none' => 'Sem Banco',
+    'cgd' => 'Caixa Geral de Depósitos',
+    'millennium' => 'Millennium BCP',
+    'santander' => 'Santander',
+    'novobanco' => 'Novo Banco',
+    'activobank' => 'ActivoBank',
+    'montepio' => 'Montepio',
+    'bankinter' => 'Bankinter',
+    'moey' => 'Moey!'
+];
+
+// Logos dos bancos
+$bankLogos = [
+    'cgd' => 'https://www.cgd.pt/Institucional/Marca-CGD/PublishingImages/Logotipo/RGB_H_Logo-CGD-2021.png',
+    'millennium' => 'https://www.millenniumbcp.pt/img/logo_millennium_bcp.svg',
+    'santander' => 'https://www.santander.pt/sites/all/themes/santander_theme/images/logo.png',
+    'novobanco' => 'https://www.novobanco.pt/site/cms.aspx?plg=b4e3fa9b-5bfe-4aaf-b8df-fdb6e9d7e0cf',
+    'activobank' => 'https://www.activobank.pt/pt/img/logo.svg',
+    'montepio' => 'https://www.montepio.org/SiteCollectionImages/logo-montepio.png',
+    'bankinter' => 'https://www.bankinter.pt/img/logo-bankinter.svg',
+    'moey' => 'https://moey.pt/assets/img/logo.svg'
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $limit = floatval($_POST['limit_amount'] ?? 0);
     $balance = floatval($_POST['balance'] ?? 0);
     $color = $_POST['color'] ?? 'purple';
+    $bank = $_POST['bank'] ?? 'none';
 
     // Validações
     if (strlen($name) < 3) {
@@ -43,19 +69,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!array_key_exists($color, $cardColors)) {
         $color = 'purple';
     }
+    if (!array_key_exists($bank, $banks)) {
+        $bank = 'none';
+    }
 
     if (empty($errors)) {
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO cards (user_id, name, limit_amount, balance, active, color)
-                VALUES (:uid, :name, :limit, :balance, 1, :color)
+                INSERT INTO cards (user_id, name, limit_amount, balance, active, color, bank)
+                VALUES (:uid, :name, :limit, :balance, 1, :color, :bank)
             ");
             $stmt->execute([
                 ':uid' => $uid,
                 ':name' => $name,
                 ':limit' => $limit,
                 ':balance' => $balance,
-                ':color' => $color
+                ':color' => $color,
+                ':bank' => $bank
             ]);
             $success = true;
 
@@ -216,7 +246,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
-    /* Tema escuro - ajustes específicos */
+    /* Seletor de bancos */
+    .bank-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .bank-option {
+      padding: 12px;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--bg-primary);
+      text-align: center;
+    }
+    .bank-option:hover {
+      border-color: var(--primary-green);
+      transform: translateY(-2px);
+    }
+    .bank-option input[type="radio"] {
+      display: none;
+    }
+    .bank-option input[type="radio"]:checked + .bank-label {
+      color: var(--primary-green);
+      font-weight: 600;
+    }
+    .bank-option input[type="radio"]:checked ~ .check-icon {
+      opacity: 1;
+    }
+    .bank-label {
+      font-size: 13px;
+      transition: all 0.3s;
+      color: var(--text-primary);
+    }
+    .check-icon {
+      opacity: 0;
+      color: var(--primary-green);
+      font-size: 18px;
+      margin-top: 4px;
+      transition: all 0.3s;
+    }
+    
+    /* Logo do banco no cartão */
+    .bank-logo-card {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      background: white;
+      border-radius: 8px;
+      padding: 4px;
+      display: none;
+    }
+    .bank-logo-card.active {
+      display: block;
+    }
+    
+    /* Tema escuro */
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
@@ -274,7 +361,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <div class="card-preview" id="cardPreview" style="background: <?=$cardColors['purple']['gradient']?>;">
                 <div>
                   <div class="mb-3">
-                    <i class="bi bi-credit-card" style="font-size: 32px;"></i>
+                    <i class="bi bi-credit-card" id="cardIcon" style="font-size: 32px;"></i>
+                    <?php foreach($bankLogos as $bankKey => $logoUrl): ?>
+                      <img src="<?=$logoUrl?>" alt="<?=$bankKey?>" class="bank-logo-card" id="logo-<?=$bankKey?>" data-bank="<?=$bankKey?>">
+                    <?php endforeach; ?>
                   </div>
                   <div class="card-number" id="preview-number">•••• •••• •••• ••••</div>
                 </div>
@@ -341,6 +431,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="mb-3">
+                  <label class="form-label">Banco</label>
+                  <div class="bank-selector">
+                    <?php foreach($banks as $bankKey => $bankName): ?>
+                      <label class="bank-option">
+                        <input 
+                          type="radio" 
+                          name="bank" 
+                          value="<?=$bankKey?>" 
+                          <?=($bank ?? 'none') === $bankKey ? 'checked' : ''?>
+                          data-bank="<?=$bankKey?>"
+                        >
+                        <div class="bank-label"><?=$bankName?></div>
+                        <div class="check-icon"><i class="bi bi-check-circle-fill"></i></div>
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+                  <small class="text-muted mt-2 d-block">Seleciona o banco do cartão (opcional)</small>
+                </div>
+
+                <div class="mb-3">
                   <label class="form-label">Cor do Cartão *</label>
                   <div class="color-selector">
                     <?php foreach($cardColors as $colorKey => $colorData): ?>
@@ -358,8 +468,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   </div>
                   <small class="text-muted mt-2 d-block">Escolhe uma cor para identificar facilmente o teu cartão</small>
                 </div>
-
-
 
                 <div class="row">
                   <div class="col-md-6 mb-3">
@@ -419,7 +527,29 @@ document.getElementById('cardName').addEventListener('input', function(e) {
   document.getElementById('preview-name').textContent = name.toUpperCase();
 });
 
-
+// Mudança de banco
+document.querySelectorAll('input[name="bank"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const bank = this.dataset.bank;
+    const cardIcon = document.getElementById('cardIcon');
+    const allLogos = document.querySelectorAll('.bank-logo-card');
+    
+    // Esconder todos os logos
+    allLogos.forEach(logo => logo.classList.remove('active'));
+    
+    if (bank === 'none') {
+      // Mostrar ícone do cartão
+      cardIcon.style.display = 'block';
+    } else {
+      // Esconder ícone e mostrar logo do banco
+      cardIcon.style.display = 'none';
+      const selectedLogo = document.getElementById('logo-' + bank);
+      if (selectedLogo) {
+        selectedLogo.classList.add('active');
+      }
+    }
+  });
+});
 
 document.getElementById('cardLimit').addEventListener('input', updateUsage);
 document.getElementById('cardBalance').addEventListener('input', updateUsage);

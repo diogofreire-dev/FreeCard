@@ -21,6 +21,18 @@ $cardColors = [
     'indigo' => 'linear-gradient(135deg, #3F51B5 0%, #3F51B5 100%)'
 ];
 
+// Mapeamento de logos de bancos
+$bankLogos = [
+    'cgd' => 'https://www.cgd.pt/Institucional/Marca-CGD/PublishingImages/Logotipo/RGB_H_Logo-CGD-2021.png',
+    'millennium' => 'https://www.millenniumbcp.pt/img/logo_millennium_bcp.svg',
+    'santander' => 'https://www.santander.pt/sites/all/themes/santander_theme/images/logo.png',
+    'novobanco' => 'https://www.novobanco.pt/site/cms.aspx?plg=b4e3fa9b-5bfe-4aaf-b8df-fdb6e9d7e0cf',
+    'activobank' => 'https://www.activobank.pt/pt/img/logo.svg',
+    'montepio' => 'https://www.montepio.org/SiteCollectionImages/logo-montepio.png',
+    'bankinter' => 'https://www.bankinter.pt/img/logo-bankinter.svg',
+    'moey' => 'https://moey.pt/assets/img/logo.svg'
+];
+
 // Ação: ativar/desativar
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST['action'] === 'toggle') {
     $cardId = intval($_POST['card_id'] ?? 0);
@@ -38,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST[
 
 // Buscar todos os cartões com estatísticas
 $stmt = $pdo->prepare("
-    SELECT c.id, c.name, c.color, c.limit_amount, c.balance, c.active, c.created_at,
+    SELECT c.id, c.name, c.color, c.bank, c.limit_amount, c.balance, c.active, c.created_at,
            COALESCE(SUM(t.amount), 0) as total_spent,
            COUNT(t.id) as transaction_count
     FROM cards c
@@ -158,6 +170,18 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       font-weight: 700;
       position: relative;
     }
+    
+    /* Logo do banco no cartão */
+    .bank-logo-card {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      background: white;
+      border-radius: 8px;
+      padding: 4px;
+      position: relative;
+    }
+    
     .summary-card {
       background: var(--bg-secondary);
       border-radius: 16px;
@@ -316,6 +340,8 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
             $available = $c['limit_amount'] - $c['balance'];
             $cardColor = $c['color'] ?? 'purple';
             $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
+            $bank = $c['bank'] ?? 'none';
+            $hasBank = $bank !== 'none' && isset($bankLogos[$bank]);
           ?>
           <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100">
@@ -324,7 +350,11 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
                 <div class="card-visual mb-3" style="background: <?=$gradient?>;">
                   <div>
                     <div class="mb-2">
-                      <i class="bi bi-credit-card" style="font-size: 28px;"></i>
+                      <?php if ($hasBank): ?>
+                        <img src="<?=$bankLogos[$bank]?>" alt="<?=$bank?>" class="bank-logo-card">
+                      <?php else: ?>
+                        <i class="bi bi-credit-card" style="font-size: 28px;"></i>
+                      <?php endif; ?>
                     </div>
                     <div class="card-number">•••• •••• •••• ••••</div>
                   </div>
@@ -429,6 +459,8 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
             $available = $c['limit_amount'] - $c['balance'];
             $cardColor = $c['color'] ?? 'purple';
             $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
+            $bank = $c['bank'] ?? 'none';
+            $hasBank = $bank !== 'none' && isset($bankLogos[$bank]);
           ?>
           <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100">
@@ -437,7 +469,11 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
                 <div class="card-visual card-visual-inactive mb-3" style="background: <?=$gradient?>;">
                   <div>
                     <div class="mb-2">
-                      <i class="bi bi-credit-card" style="font-size: 28px;"></i>
+                      <?php if ($hasBank): ?>
+                        <img src="<?=$bankLogos[$bank]?>" alt="<?=$bank?>" class="bank-logo-card">
+                      <?php else: ?>
+                        <i class="bi bi-credit-card" style="font-size: 28px;"></i>
+                      <?php endif; ?>
                     </div>
                     <div class="card-number">•••• •••• •••• ••••</div>
                   </div>
