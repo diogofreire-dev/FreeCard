@@ -123,21 +123,25 @@ foreach ($cards as $card) {
 }
 
 // ============================================
-// ORÇAMENTOS - Buscar orçamento mensal ativo
+// ORÇAMENTOS - Buscar orçamento ativo mais recente
 // ============================================
 $stmt = $pdo->prepare("
-    SELECT 
+    SELECT
         b.*,
-        COALESCE(SUM(t.amount), 0) as current_spent
+        COALESCE(SUM(CASE
+            WHEN b.period = 'monthly' AND t.transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                AND t.transaction_date <= LAST_DAY(CURDATE()) THEN t.amount
+            WHEN b.period = 'weekly' AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+                AND t.transaction_date <= CURDATE() THEN t.amount
+            WHEN b.period = 'yearly' AND YEAR(t.transaction_date) = YEAR(CURDATE()) THEN t.amount
+            ELSE 0
+        END), 0) as current_spent
     FROM budgets b
     LEFT JOIN transactions t ON t.user_id = b.user_id
-        AND t.transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-        AND t.transaction_date <= LAST_DAY(CURDATE())
         AND (b.category IS NULL OR t.category = b.category)
         AND (b.card_id IS NULL OR t.card_id = b.card_id)
     WHERE b.user_id = :uid
     AND b.active = 1
-    AND b.period = 'monthly'
     GROUP BY b.id
     ORDER BY b.created_at DESC
     LIMIT 1
@@ -419,7 +423,7 @@ $categoryColors = [
   </div>
 </nav>
 
-<div class="container mt-4">
+<div class="container mt-4 pb-5">
   <?php if (!empty($alerts)): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       <strong><i class="bi bi-exclamation-triangle"></i> Alertas:</strong>
@@ -667,7 +671,7 @@ $categoryColors = [
   <div class="row mt-3">
     <div class="col-12">
       <?php if ($mainBudget): ?>
-        <div class="card shadow-sm" style="border-left: 4px solid var(--primary-green);">
+        <div class="card shadow-sm">
           <div class="card-body py-3 px-4">
             <div class="d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center gap-3">
@@ -684,7 +688,7 @@ $categoryColors = [
           </div>
         </div>
       <?php else: ?>
-        <div class="card shadow-sm" style="border-left: 4px solid #95a5a6;">
+        <div class="card shadow-sm">
           <div class="card-body py-3 px-4">
             <div class="d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center gap-3">

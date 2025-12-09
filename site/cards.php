@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST[
 
 // Buscar todos os cartões com estatísticas
 $stmt = $pdo->prepare("
-    SELECT c.id, c.name, c.color, c.bank, c.limit_amount, c.balance, c.active, c.created_at,
+    SELECT c.id, c.name, c.color, c.limit_amount, c.balance, c.active, c.created_at,
            COALESCE(SUM(t.amount), 0) as total_spent,
            COUNT(t.id) as transaction_count
     FROM cards c
