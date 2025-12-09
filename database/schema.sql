@@ -14,10 +14,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS cards (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
-  name VARCHAR(100) NOT NULL,        -- ex: "Cartão Visa"
+  name VARCHAR(100) NOT NULL,
   limit_amount DECIMAL(10,2) DEFAULT 0,
   balance DECIMAL(10,2) DEFAULT 0,
-  color VARCHAR(20) DEFAULT 'purple', -- cor do cartão
+  color VARCHAR(20) DEFAULT 'purple',
   active TINYINT(1) DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   amount DECIMAL(10,2) NOT NULL,
   description VARCHAR(255),
   category VARCHAR(100) DEFAULT NULL,
-  transaction_date DATE NOT NULL,  -- NOVO CAMPO
+  transaction_date DATE NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS budget_alerts (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   budget_id INT UNSIGNED NOT NULL,
   user_id INT UNSIGNED NOT NULL,
-  alert_type ENUM('warning', 'exceeded') NOT NULL, -- warning = 80%, exceeded = 100%
+  alert_type ENUM('warning', 'exceeded') NOT NULL,
   percentage DECIMAL(5,2) NOT NULL,
   amount_spent DECIMAL(10,2) NOT NULL,
   triggered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -82,33 +82,3 @@ CREATE TABLE IF NOT EXISTS budget_alerts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_user_unacknowledged (user_id, acknowledged)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- substitui user_id por um id válido (ex.: 1)
-INSERT INTO cards (user_id, name, limit_amount, balance, color) VALUES
-(1, 'Visa Principal', 1500.00, 300.00, 'purple'),
-(1, 'Mastercard Secundário', 1000.00, 50.00, 'blue');
-
-INSERT INTO transactions (user_id, card_id, amount, description, category, created_at) VALUES
-(1, 1, 45.60, 'Café e snack', 'Alimentação', NOW() - INTERVAL 2 DAY),
-(1, 1, 120.00, 'Supermercado', 'Compras', NOW() - INTERVAL 5 DAY),
-(1, 2, 12.50, 'Uber', 'Transporte', NOW() - INTERVAL 1 DAY);
-
-SELECT COALESCE(SUM(amount),0) AS total_month
-FROM transactions
-WHERE user_id = :uid
-  AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01');
-
-SELECT COUNT(*) AS cnt
-FROM transactions
-WHERE user_id = :uid AND created_at >= NOW() - INTERVAL 30 DAY;
-
-SELECT t.*, c.name AS card_name
-FROM transactions t
-LEFT JOIN cards c ON c.id = t.card_id
-WHERE t.user_id = :uid
-ORDER BY t.created_at DESC
-LIMIT 8;
-
-SELECT id, name, limit_amount, balance, color, active
-FROM cards
-WHERE user_id = :uid;
