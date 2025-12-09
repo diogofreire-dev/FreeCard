@@ -376,7 +376,7 @@ $cards = $stmt->fetchAll();
     <div class="modal-content" style="background: var(--bg-secondary); border: none; border-radius: 20px;">
       <div class="modal-header" style="border: none;">
         <h5 class="modal-title" style="color: var(--text-primary);">
-          <i class="bi bi-plus-circle"></i> Novo Orçamento
+          <i class="bi"></i> Novo Orçamento
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
