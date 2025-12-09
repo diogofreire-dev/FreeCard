@@ -122,6 +122,53 @@ foreach ($cards as $card) {
     }
 }
 
+// ============================================
+// ORÇAMENTOS - Buscar orçamento mensal ativo
+// ============================================
+$stmt = $pdo->prepare("
+    SELECT 
+        b.*,
+        COALESCE(SUM(t.amount), 0) as current_spent
+    FROM budgets b
+    LEFT JOIN transactions t ON t.user_id = b.user_id
+        AND t.transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        AND t.transaction_date <= LAST_DAY(CURDATE())
+        AND (b.category IS NULL OR t.category = b.category)
+        AND (b.card_id IS NULL OR t.card_id = b.card_id)
+    WHERE b.user_id = :uid
+    AND b.active = 1
+    AND b.period = 'monthly'
+    GROUP BY b.id
+    ORDER BY b.created_at DESC
+    LIMIT 1
+");
+$stmt->execute([':uid' => $uid]);
+$mainBudget = $stmt->fetch();
+
+// Calcular percentagem e alertas do orçamento
+$budgetPercentage = 0;
+$budgetRemaining = 0;
+$budgetAlert = null;
+
+if ($mainBudget) {
+    $budgetPercentage = ($mainBudget['current_spent'] / $mainBudget['amount']) * 100;
+    $budgetRemaining = $mainBudget['amount'] - $mainBudget['current_spent'];
+    
+    if ($budgetPercentage >= 100) {
+        $budgetAlert = [
+            'type' => 'danger',
+            'icon' => 'exclamation-triangle-fill',
+            'message' => 'Orçamento excedido! Já gastaste €' . number_format($mainBudget['current_spent'] - $mainBudget['amount'], 2) . ' acima do limite.'
+        ];
+    } elseif ($budgetPercentage >= 80) {
+        $budgetAlert = [
+            'type' => 'warning',
+            'icon' => 'exclamation-circle-fill',
+            'message' => 'Atenção! Já usaste ' . round($budgetPercentage) . '% do teu orçamento mensal.'
+        ];
+    }
+}
+
 // Cores para categorias
 $categoryColors = [
     'Compras' => '#3498db',
@@ -356,6 +403,7 @@ $categoryColors = [
         <li class="nav-item"><a class="nav-link" href="cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
         <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
         <li class="nav-item"><a class="nav-link" href="analytics.php"><i class="bi bi-graph-up"></i> Análise</a></li>
+        <li class="nav-item"><a class="nav-link" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i> <?=htmlspecialchars($_SESSION['username'])?>
@@ -614,6 +662,47 @@ $categoryColors = [
       </div>
     </div>
   </div>
+
+  <!-- Card de Orçamentos - Discreto no final -->
+  <div class="row mt-3">
+    <div class="col-12">
+      <?php if ($mainBudget): ?>
+        <div class="card shadow-sm" style="border-left: 4px solid var(--primary-green);">
+          <div class="card-body py-3 px-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-piggy-bank" style="font-size: 24px; color: var(--primary-green);"></i>
+                <div>
+                  <small class="text-muted d-block" style="font-size: 12px;">Orçamento Ativo</small>
+                  <strong>Tens 1 orçamento definido</strong>
+                </div>
+              </div>
+              <a href="budgets.php" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-right"></i> Ver Detalhes
+              </a>
+            </div>
+          </div>
+        </div>
+      <?php else: ?>
+        <div class="card shadow-sm" style="border-left: 4px solid #95a5a6;">
+          <div class="card-body py-3 px-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-piggy-bank" style="font-size: 24px; color: #95a5a6;"></i>
+                <div>
+                  <small class="text-muted d-block" style="font-size: 12px;">Orçamentos</small>
+                  <strong>Nenhum orçamento definido</strong>
+                </div>
+              </div>
+              <a href="budgets.php" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-circle"></i> Criar Orçamento
+              </a>
+            </div>
+          </div>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -625,6 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
       bar.style.width = bar.dataset.width;
     });
   }, 100);
+
 });
 </script>
 </body>

@@ -50,6 +50,39 @@ CREATE TABLE IF NOT EXISTS user_settings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS budgets (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  period ENUM('monthly', 'weekly', 'yearly') NOT NULL DEFAULT 'monthly',
+  category VARCHAR(100) NULL,
+  card_id INT UNSIGNED NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NULL,  
+  active TINYINT(1) DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL,
+  INDEX idx_user_active (user_id, active),
+  INDEX idx_dates (start_date, end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS budget_alerts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  budget_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  alert_type ENUM('warning', 'exceeded') NOT NULL, -- warning = 80%, exceeded = 100%
+  percentage DECIMAL(5,2) NOT NULL,
+  amount_spent DECIMAL(10,2) NOT NULL,
+  triggered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  acknowledged TINYINT(1) DEFAULT 0,
+  FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_unacknowledged (user_id, acknowledged)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- substitui user_id por um id válido (ex.: 1)
 INSERT INTO cards (user_id, name, limit_amount, balance, color) VALUES
 (1, 'Visa Principal', 1500.00, 300.00, 'purple'),

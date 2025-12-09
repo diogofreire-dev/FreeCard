@@ -1,0 +1,444 @@
+<?php
+// site/budgets.php
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../config/db.php';
+$uid = $_SESSION['user_id'] ?? null;
+require_once __DIR__ . '/theme_helper.php';
+$currentTheme = getUserTheme($pdo, $uid);
+
+$message = '';
+$messageType = 'info';
+
+// Processar ações
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'create':
+                $name = trim($_POST['name'] ?? '');
+                $amount = floatval($_POST['amount'] ?? 0);
+                $period = $_POST['period'] ?? 'monthly';
+                $category = !empty($_POST['category']) ? trim($_POST['category']) : null;
+                $card_id = !empty($_POST['card_id']) ? intval($_POST['card_id']) : null;
+                
+                if ($amount > 0 && strlen($name) >= 3) {
+                    try {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO budgets (user_id, name, amount, period, category, card_id, start_date)
+                            VALUES (:uid, :name, :amount, :period, :category, :card_id, CURDATE())
+                        ");
+                        $stmt->execute([
+                            ':uid' => $uid,
+                            ':name' => $name,
+                            ':amount' => $amount,
+                            ':period' => $period,
+                            ':category' => $category,
+                            ':card_id' => $card_id
+                        ]);
+                        $message = 'Orçamento criado com sucesso!';
+                        $messageType = 'success';
+                    } catch (PDOException $e) {
+                        $message = 'Erro ao criar orçamento.';
+                        $messageType = 'danger';
+                    }
+                } else {
+                    $message = 'Dados inválidos.';
+                    $messageType = 'danger';
+                }
+                break;
+                
+            case 'toggle':
+                $budget_id = intval($_POST['budget_id'] ?? 0);
+                try {
+                    $stmt = $pdo->prepare("UPDATE budgets SET active = NOT active WHERE id = :id AND user_id = :uid");
+                    $stmt->execute([':id' => $budget_id, ':uid' => $uid]);
+                    $message = 'Estado do orçamento alterado!';
+                    $messageType = 'success';
+                } catch (PDOException $e) {
+                    $message = 'Erro ao alterar orçamento.';
+                    $messageType = 'danger';
+                }
+                break;
+                
+            case 'delete':
+                $budget_id = intval($_POST['budget_id'] ?? 0);
+                try {
+                    $stmt = $pdo->prepare("DELETE FROM budgets WHERE id = :id AND user_id = :uid");
+                    $stmt->execute([':id' => $budget_id, ':uid' => $uid]);
+                    $message = 'Orçamento removido!';
+                    $messageType = 'success';
+                } catch (PDOException $e) {
+                    $message = 'Erro ao remover orçamento.';
+                    $messageType = 'danger';
+                }
+                break;
+        }
+    }
+}
+
+// Buscar orçamentos com gastos atuais
+$stmt = $pdo->prepare("
+    SELECT 
+        b.*,
+        c.name as card_name,
+        COALESCE(SUM(CASE 
+            WHEN b.period = 'monthly' AND t.transaction_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') 
+                AND t.transaction_date <= LAST_DAY(CURDATE()) THEN t.amount
+            WHEN b.period = 'weekly' AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) 
+                AND t.transaction_date <= CURDATE() THEN t.amount
+            WHEN b.period = 'yearly' AND YEAR(t.transaction_date) = YEAR(CURDATE()) THEN t.amount
+            ELSE 0
+        END), 0) as current_spent
+    FROM budgets b
+    LEFT JOIN cards c ON c.id = b.card_id
+    LEFT JOIN transactions t ON t.user_id = b.user_id
+        AND (b.category IS NULL OR t.category = b.category)
+        AND (b.card_id IS NULL OR t.card_id = b.card_id)
+    WHERE b.user_id = :uid
+    GROUP BY b.id
+    ORDER BY b.active DESC, b.created_at DESC
+");
+$stmt->execute([':uid' => $uid]);
+$budgets = $stmt->fetchAll();
+
+// Buscar categorias e cartões
+$stmt = $pdo->prepare("SELECT DISTINCT category FROM transactions WHERE user_id = :uid AND category IS NOT NULL ORDER BY category");
+$stmt->execute([':uid' => $uid]);
+$categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+$stmt = $pdo->prepare("SELECT id, name FROM cards WHERE user_id = :uid ORDER BY name");
+$stmt->execute([':uid' => $uid]);
+$cards = $stmt->fetchAll();
+?>
+<!doctype html>
+<html lang="pt-PT" data-theme="<?=$currentTheme?>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orçamentos - FreeCard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <style>
+    :root {
+      --primary-green: #2ecc71;
+      --dark-green: #27ae60;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+    }
+    .navbar { 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+      background: var(--navbar-bg);
+    }
+    .navbar-brand img { height: 35px; margin-right: 8px; }
+    .btn-primary { 
+      background: var(--primary-green); 
+      border-color: var(--primary-green); 
+    }
+    .btn-primary:hover { 
+      background: var(--dark-green); 
+      border-color: var(--dark-green); 
+    }
+    .card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px var(--shadow);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: all 0.3s;
+    }
+    .budget-card {
+      padding: 24px;
+      border-radius: 16px;
+      background: var(--bg-secondary);
+      box-shadow: 0 4px 20px var(--shadow);
+      margin-bottom: 20px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .budget-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px var(--shadow);
+    }
+    .budget-card.warning {
+      border-color: #f39c12;
+    }
+    .budget-card.danger {
+      border-color: #e74c3c;
+    }
+    .budget-progress {
+      height: 12px;
+      border-radius: 10px;
+      background: var(--bg-hover);
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .budget-progress-bar {
+      height: 100%;
+      transition: width 1s ease-out;
+      border-radius: 10px;
+    }
+    .badge-period {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .form-label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .form-control, .form-select {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+    .form-control:focus, .form-select:focus {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-color: var(--primary-green);
+    }
+    [data-theme="dark"] .text-muted {
+      color: var(--text-secondary) !important;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="index.php">
+      <img src="assets/logo2.png" alt="Freecard">
+      FreeCard
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
+        <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
+        <li class="nav-item"><a class="nav-link" href="analytics.php"><i class="bi bi-graph-up"></i> Análise</a></li>
+        <li class="nav-item"><a class="nav-link active" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i> <?=htmlspecialchars($_SESSION['username'])?>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2><i class="bi bi-piggy-bank"></i> Os Meus Orçamentos</h2>
+      <p class="text-muted mb-0">Controla os teus gastos mensais e mantém-te no orçamento</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newBudgetModal">
+      <i class="bi bi-plus-circle"></i> Novo Orçamento
+    </button>
+  </div>
+
+  <?php if ($message): ?>
+    <div class="alert alert-<?=$messageType?> alert-dismissible fade show">
+      <?=htmlspecialchars($message)?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if (empty($budgets)): ?>
+    <div class="card">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-piggy-bank" style="font-size: 80px; color: #e0e0e0;"></i>
+        <h4 class="text-muted mt-4 mb-3">Ainda não tens orçamentos definidos</h4>
+        <p class="text-muted mb-4">Cria o teu primeiro orçamento para começares a controlar os teus gastos</p>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newBudgetModal">
+          <i class="bi bi-plus-circle"></i> Criar Primeiro Orçamento
+        </button>
+      </div>
+    </div>
+  <?php else: ?>
+    <div class="row">
+      <?php foreach($budgets as $b): ?>
+        <?php 
+          $percentage = $b['amount'] > 0 ? ($b['current_spent'] / $b['amount']) * 100 : 0;
+          $remaining = $b['amount'] - $b['current_spent'];
+          $statusClass = $percentage >= 100 ? 'danger' : ($percentage >= 80 ? 'warning' : '');
+          $barColor = $percentage >= 100 ? '#e74c3c' : ($percentage >= 80 ? '#f39c12' : '#2ecc71');
+          
+          $periodLabels = [
+            'monthly' => 'Mensal',
+            'weekly' => 'Semanal',
+            'yearly' => 'Anual'
+          ];
+        ?>
+        <div class="col-md-6 col-xl-4">
+          <div class="budget-card <?=$statusClass?> <?=!$b['active'] ? 'opacity-50' : ''?>">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="mb-1"><?=htmlspecialchars($b['name'])?></h5>
+                <div class="d-flex gap-2 flex-wrap">
+                  <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
+                    <i class="bi bi-calendar-event"></i> <?=$periodLabels[$b['period']]?>
+                  </span>
+                  <?php if($b['category']): ?>
+                    <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
+                      <i class="bi bi-tag"></i> <?=htmlspecialchars($b['category'])?>
+                    </span>
+                  <?php endif; ?>
+                  <?php if($b['card_name']): ?>
+                    <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
+                      <i class="bi bi-credit-card"></i> <?=htmlspecialchars($b['card_name'])?>
+                    </span>
+                  <?php endif; ?>
+                </div>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <form method="post" class="d-inline">
+                      <input type="hidden" name="action" value="toggle">
+                      <input type="hidden" name="budget_id" value="<?=$b['id']?>">
+                      <button type="submit" class="dropdown-item">
+                        <i class="bi bi-<?=$b['active'] ? 'pause' : 'play'?>-circle"></i>
+                        <?=$b['active'] ? 'Desativar' : 'Ativar'?>
+                      </button>
+                    </form>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <form method="post" class="d-inline" onsubmit="return confirm('Tens a certeza?');">
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="budget_id" value="<?=$b['id']?>">
+                      <button type="submit" class="dropdown-item text-danger">
+                        <i class="bi bi-trash"></i> Eliminar
+                      </button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="budget-progress">
+              <div class="budget-progress-bar" style="width: 0%; background: <?=$barColor?>;" data-width="<?=min($percentage, 100)?>%"></div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-end">
+              <div>
+                <small class="text-muted d-block">Gasto</small>
+                <h4 class="mb-0 <?=$percentage >= 100 ? 'text-danger' : ''?>">
+                  €<?=number_format($b['current_spent'], 2)?>
+                </h4>
+              </div>
+              <div class="text-end">
+                <small class="text-muted d-block">Orçamento</small>
+                <h4 class="mb-0">€<?=number_format($b['amount'], 2)?>
+</h4>
+              </div>
+            </div>
+
+            <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted small">Restante</span>
+                <strong class="<?=$remaining < 0 ? 'text-danger' : 'text-success'?>">
+                  €<?=number_format(abs($remaining), 2)?> <?=$remaining < 0 ? 'excedido' : ''?>
+                </strong>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span class="text-muted small">Percentagem</span>
+                <strong class="<?=$percentage >= 100 ? 'text-danger' : ($percentage >= 80 ? 'text-warning' : '')?>">
+                  <?=round($percentage)?>%
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
+<!-- Modal Novo Orçamento -->
+<div class="modal fade" id="newBudgetModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background: var(--bg-secondary); border: none; border-radius: 20px;">
+      <div class="modal-header" style="border: none;">
+        <h5 class="modal-title" style="color: var(--text-primary);">
+          <i class="bi bi-plus-circle"></i> Novo Orçamento
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post">
+        <input type="hidden" name="action" value="create">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome do Orçamento</label>
+            <input type="text" name="name" class="form-control" placeholder="ex: Orçamento Mensal" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Valor (€)</label>
+            <input type="number" name="amount" class="form-control" step="0.01" min="0.01" placeholder="1500.00" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Período</label>
+            <select name="period" class="form-select">
+              <option value="monthly">Mensal</option>
+              <option value="weekly">Semanal</option>
+              <option value="yearly">Anual</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Categoria (opcional)</label>
+            <select name="category" class="form-select">
+              <option value="">Todas as categorias</option>
+              <?php foreach($categories as $cat): ?>
+                <option value="<?=htmlspecialchars($cat)?>"><?=htmlspecialchars($cat)?></option>
+              <?php endforeach; ?>
+            </select>
+            <small class="text-muted">Deixa vazio para orçamento global</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cartão (opcional)</label>
+            <select name="card_id" class="form-select">
+              <option value="">Todos os cartões</option>
+              <?php foreach($cards as $c): ?>
+                <option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?></option>
+              <?php endforeach; ?>
+            </select>
+            <small class="text-muted">Deixa vazio para todos os cartões</small>
+          </div>
+        </div>
+        <div class="modal-footer" style="border: none;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Criar Orçamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Animar barras de progresso
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    document.querySelectorAll('.budget-progress-bar').forEach(bar => {
+      bar.style.width = bar.dataset.width;
+    });
+  }, 100);
+});
+</script>
+</body>
+</html>
