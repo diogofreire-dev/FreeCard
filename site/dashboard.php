@@ -667,18 +667,31 @@ $categoryColors = [
     </div>
   </div>
 
-  <!-- Card de Orçamentos - Discreto no final -->
+<!-- Card de Orçamentos - Discreto no final -->
   <div class="row mt-3">
     <div class="col-12">
-      <?php if ($mainBudget): ?>
+      <?php
+      // Contar orçamentos ativos
+      $stmt = $pdo->prepare("SELECT COUNT(*) FROM budgets WHERE user_id = :uid AND active = 1");
+      $stmt->execute([':uid' => $uid]);
+      $activeBudgetsCount = $stmt->fetchColumn();
+      
+      if ($activeBudgetsCount > 0): 
+      ?>
         <div class="card shadow-sm">
           <div class="card-body py-3 px-4">
             <div class="d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center gap-3">
                 <i class="bi bi-piggy-bank" style="font-size: 24px; color: var(--primary-green);"></i>
                 <div>
-                  <small class="text-muted d-block" style="font-size: 12px;">Orçamento Ativo</small>
-                  <strong>Tens 1 orçamento definido</strong>
+                  <small class="text-muted d-block" style="font-size: 12px;">Orçamentos Ativos</small>
+                  <strong>
+                    <?php if ($activeBudgetsCount == 1): ?>
+                      Tens 1 orçamento definido
+                    <?php else: ?>
+                      Tens <?=$activeBudgetsCount?> orçamentos definidos
+                    <?php endif; ?>
+                  </strong>
                 </div>
               </div>
               <a href="budgets.php" class="btn btn-sm btn-outline-primary">

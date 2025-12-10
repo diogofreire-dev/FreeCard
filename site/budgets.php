@@ -100,11 +100,19 @@ $stmt = $pdo->prepare("
 $stmt->execute([':uid' => $uid]);
 $budgets = $stmt->fetchAll();
 
-// Buscar categorias e cartões
-$stmt = $pdo->prepare("SELECT DISTINCT category FROM transactions WHERE user_id = :uid AND category IS NOT NULL ORDER BY category");
-$stmt->execute([':uid' => $uid]);
-$categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+// Array fixo de todas as categorias disponíveis
+$categories = [
+    'Compras',
+    'Alimentação',
+    'Transporte',
+    'Saúde',
+    'Entretenimento',
+    'Educação',
+    'Casa',
+    'Outros'
+];
 
+// Buscar cartões
 $stmt = $pdo->prepare("SELECT id, name FROM cards WHERE user_id = :uid ORDER BY name");
 $stmt->execute([':uid' => $uid]);
 $cards = $stmt->fetchAll();
@@ -376,7 +384,7 @@ $cards = $stmt->fetchAll();
     <div class="modal-content" style="background: var(--bg-secondary); border: none; border-radius: 20px;">
       <div class="modal-header" style="border: none;">
         <h5 class="modal-title" style="color: var(--text-primary);">
-          <i class="bi"></i> Novo Orçamento
+          <i class="bi bi-piggy-bank"></i> Novo Orçamento
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
