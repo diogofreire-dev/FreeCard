@@ -45,6 +45,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $messageType = 'danger';
                 }
                 break;
+            
+            case 'edit':
+                $budget_id = intval($_POST['budget_id'] ?? 0);
+                $name = trim($_POST['name'] ?? '');
+                $amount = floatval($_POST['amount'] ?? 0);
+                $period = $_POST['period'] ?? 'monthly';
+                $category = !empty($_POST['category']) ? trim($_POST['category']) : null;
+                $card_id = !empty($_POST['card_id']) ? intval($_POST['card_id']) : null;
+                
+                if ($amount > 0 && strlen($name) >= 3) {
+                    try {
+                        $stmt = $pdo->prepare("
+                            UPDATE budgets 
+                            SET name = :name, amount = :amount, period = :period, 
+                                category = :category, card_id = :card_id
+                            WHERE id = :id AND user_id = :uid
+                        ");
+                        $stmt->execute([
+                            ':id' => $budget_id,
+                            ':uid' => $uid,
+                            ':name' => $name,
+                            ':amount' => $amount,
+                            ':period' => $period,
+                            ':category' => $category,
+                            ':card_id' => $card_id
+                        ]);
+                        $message = 'Orçamento atualizado com sucesso!';
+                        $messageType = 'success';
+                    } catch (PDOException $e) {
+                        $message = 'Erro ao atualizar orçamento.';
+                        $messageType = 'danger';
+                    }
+                } else {
+                    $message = 'Dados inválidos.';
+                    $messageType = 'danger';
+                }
+                break;
                 
             case 'toggle':
                 $budget_id = intval($_POST['budget_id'] ?? 0);
@@ -197,17 +234,52 @@ $cards = $stmt->fetchAll();
     .form-label {
       font-weight: 600;
       color: var(--text-primary);
+      margin-bottom: 8px;
     }
     .form-control, .form-select {
       background: var(--bg-primary);
       color: var(--text-primary);
       border: 2px solid var(--border-color);
+      padding: 10px 14px;
     }
     .form-control:focus, .form-select:focus {
       background: var(--bg-primary);
       color: var(--text-primary);
       border-color: var(--primary-green);
+      box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.25);
     }
+    
+    /* Corrigir visibilidade do texto nos inputs no tema escuro */
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+    
+    [data-theme="dark"] .form-control:focus,
+    [data-theme="dark"] .form-select:focus {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--primary-green);
+    }
+    
+    [data-theme="dark"] .form-control::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+    
+    /* Garantir que o texto digitado seja visível */
+    [data-theme="dark"] input.form-control,
+    [data-theme="dark"] select.form-select {
+      color: #ecf0f1 !important;
+    }
+    
+    [data-theme="dark"] .form-select option {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
@@ -316,6 +388,11 @@ $cards = $stmt->fetchAll();
                 </button>
                 <ul class="dropdown-menu">
                   <li>
+                    <button type="button" class="dropdown-item" onclick="editBudget(<?=htmlspecialchars(json_encode($b))?>)">
+                      <i class="bi bi-pencil"></i> Editar
+                    </button>
+                  </li>
+                  <li>
                     <form method="post" class="d-inline">
                       <input type="hidden" name="action" value="toggle">
                       <input type="hidden" name="budget_id" value="<?=$b['id']?>">
@@ -352,8 +429,7 @@ $cards = $stmt->fetchAll();
               </div>
               <div class="text-end">
                 <small class="text-muted d-block">Orçamento</small>
-                <h4 class="mb-0">€<?=number_format($b['amount'], 2)?>
-</h4>
+                <h4 class="mb-0">€<?=number_format($b['amount'], 2)?></h4>
               </div>
             </div>
 
@@ -437,6 +513,64 @@ $cards = $stmt->fetchAll();
   </div>
 </div>
 
+<!-- Modal Editar Orçamento -->
+<div class="modal fade" id="editBudgetModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background: var(--bg-secondary); border: none; border-radius: 20px;">
+      <div class="modal-header" style="border: none;">
+        <h5 class="modal-title" style="color: var(--text-primary);">
+          <i class="bi bi-pencil"></i> Editar Orçamento
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post">
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="budget_id" id="edit_budget_id">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome do Orçamento</label>
+            <input type="text" name="name" id="edit_name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Valor (€)</label>
+            <input type="number" name="amount" id="edit_amount" class="form-control" step="0.01" min="0.01" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Período</label>
+            <select name="period" id="edit_period" class="form-select">
+              <option value="monthly">Mensal</option>
+              <option value="weekly">Semanal</option>
+              <option value="yearly">Anual</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Categoria (opcional)</label>
+            <select name="category" id="edit_category" class="form-select">
+              <option value="">Todas as categorias</option>
+              <?php foreach($categories as $cat): ?>
+                <option value="<?=htmlspecialchars($cat)?>"><?=htmlspecialchars($cat)?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cartão (opcional)</label>
+            <select name="card_id" id="edit_card_id" class="form-select">
+              <option value="">Todos os cartões</option>
+              <?php foreach($cards as $c): ?>
+                <option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="border: none;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Animar barras de progresso
@@ -447,6 +581,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }, 100);
 });
+
+// Função para editar orçamento
+function editBudget(budget) {
+  document.getElementById('edit_budget_id').value = budget.id;
+  document.getElementById('edit_name').value = budget.name;
+  document.getElementById('edit_amount').value = budget.amount;
+  document.getElementById('edit_period').value = budget.period;
+  document.getElementById('edit_category').value = budget.category || '';
+  document.getElementById('edit_card_id').value = budget.card_id || '';
+  
+  var editModal = new bootstrap.Modal(document.getElementById('editBudgetModal'));
+  editModal.show();
+}
 </script>
 </body>
 </html>
