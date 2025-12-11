@@ -409,7 +409,7 @@
       transform: scale(1.1);
     }
     
-    .stat-box h2 {
+    .stat-box h2, .stat-box h2 i {
       font-size: 64px;
       font-weight: 900;
       margin-bottom: 10px;
