@@ -632,7 +632,7 @@
 
 <section class="feature-section">
   <div class="container">
-    <h2 class="section-title fade-in">Tudo o que precisas para gerir as tuas finanças</h2>
+    <h2 class="section-title fade-in">Tudo o que precisas para gerir os teus cartões</h2>
     <p class="section-subtitle fade-in">Ferramentas poderosas para controlo total</p>
     <div class="row g-4">
       <div class="col-md-4 fade-in">
@@ -690,7 +690,7 @@
       <div class="col-md-3 fade-in">
         <div class="stat-box">
           <h2><i class="bi bi-phone"></i></h2>
-          <p>100% Responsive</p>
+          <p>100% Responsivo</p>
         </div>
       </div>
     </div>
