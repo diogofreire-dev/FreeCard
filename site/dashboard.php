@@ -102,14 +102,31 @@ $stmt = $pdo->prepare("
 $stmt->execute([':uid' => $uid]);
 $recent = $stmt->fetchAll();
 
-// Cartões
+// Cartões com estatísticas
 $stmt = $pdo->prepare("
-    SELECT id, name, limit_amount, balance, active
-    FROM cards
-    WHERE user_id = :uid
+    SELECT c.id, c.name, c.color, c.limit_amount, c.balance, c.active, c.created_at,
+           COALESCE(SUM(t.amount), 0) as total_spent,
+           COUNT(t.id) as transaction_count
+    FROM cards c
+    LEFT JOIN transactions t ON t.card_id = c.id
+    WHERE c.user_id = :uid
+    GROUP BY c.id
+    ORDER BY c.active DESC, c.created_at DESC
 ");
 $stmt->execute([':uid' => $uid]);
 $cards = $stmt->fetchAll();
+
+// Mapeamento de cores
+$cardColors = [
+    'purple' => 'linear-gradient(135deg, #667eea 0%, #667eea 100%)',
+    'blue' => 'linear-gradient(135deg, #2196F3 0%, #2196F3 100%)',
+    'green' => 'linear-gradient(135deg, #13d168ff 0%, #13d168ff 100%)',
+    'orange' => 'linear-gradient(135deg, #FF9800 0%, #FF9800 100%)',
+    'red' => 'linear-gradient(135deg, #f44336 0%, #f44336 100%)',
+    'pink' => 'linear-gradient(135deg, #E91E63 0%, #E91E63 100%)',
+    'teal' => 'linear-gradient(135deg, #00BCD4 0%, #00BCD4 100%)',
+    'indigo' => 'linear-gradient(135deg, #3F51B5 0%, #3F51B5 100%)'
+];
 
 // Alertas: cartão com >80% do limite
 $alerts = [];
@@ -259,6 +276,45 @@ $categoryColors = [
       margin: 0;
     }
     
+    /* Card visual dos cartões (igual ao cards.php) */
+    .card-visual {
+      border-radius: 12px;
+      padding: 16px;
+      color: white;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .card-visual::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    .card-visual-inactive {
+      background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+      opacity: 0.7;
+    }
+    .card-number {
+      font-size: 16px;
+      letter-spacing: 2px;
+      font-weight: 600;
+      position: relative;
+    }
+    .card-name {
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      position: relative;
+    }
+    
     /* Gráfico de barras custom */
     .category-bar-container {
       margin-bottom: 20px;
@@ -389,6 +445,17 @@ $categoryColors = [
       background: #3498db !important;
       color: white !important;
     }
+    [data-theme="dark"] .badge.bg-success {
+      background: #27ae60 !important;
+      color: white !important;
+    }
+    [data-theme="dark"] .badge.bg-secondary {
+      background: #7f8c8d !important;
+      color: white !important;
+    }
+    [data-theme="dark"] .progress {
+      background: var(--bg-hover);
+    }
   </style>
 </head>
 <body>
@@ -463,7 +530,7 @@ $categoryColors = [
         </div>
         <div class="d-flex justify-content-between mb-3">
           <span class="text-muted">Cartões ativos</span>
-          <strong><?=count($cards)?></strong>
+          <strong><?=count(array_filter($cards, fn($c) => $c['active']))?></strong>
         </div>
         
         <div class="d-grid gap-2">
@@ -476,7 +543,7 @@ $categoryColors = [
         </div>
       </div>
 
-      <!-- Os teus cartões -->
+      <!-- Os teus cartões com visual atualizado -->
       <div class="card shadow-sm mt-3">
         <div class="card-body">
           <h6 class="card-title mb-3"><i class="bi bi-wallet2"></i> Os Teus Cartões</h6>
@@ -487,28 +554,46 @@ $categoryColors = [
             </div>
           <?php else: ?>
             <?php 
-            $displayCards = array_slice($cards, 0, 3);
-            $remainingCount = count($cards) - 3;
-            foreach($displayCards as $c): ?>
-              <?php 
-                $percentage = $c['limit_amount'] > 0 ? ($c['balance'] / $c['limit_amount']) * 100 : 0;
-                $progressColor = $percentage >= 80 ? 'danger' : ($percentage >= 60 ? 'warning' : 'success');
-              ?>
-              <div class="mb-3 p-3 border rounded">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <strong><?=htmlspecialchars($c['name'])?></strong>
+            $displayCards = array_slice($cards, 0, 2);
+            $remainingCount = count($cards) - 2;
+            foreach($displayCards as $c): 
+              $percentage = $c['limit_amount'] > 0 ? ($c['balance'] / $c['limit_amount']) * 100 : 0;
+              $progressColor = $percentage >= 80 ? 'danger' : ($percentage >= 60 ? 'warning' : 'success');
+              $available = $c['limit_amount'] - $c['balance'];
+              $cardColor = $c['color'] ?? 'purple';
+              $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
+            ?>
+              <!-- Card Visual -->
+              <div class="card-visual <?=!$c['active'] ? 'card-visual-inactive' : ''?>" style="background: <?=$gradient?>;">
+                <div>
+                  <div class="mb-2">
+                    <i class="bi bi-credit-card" style="font-size: 20px;"></i>
                   </div>
-                  <span class="badge bg-<?=$c['active'] ? 'success' : 'secondary'?>">
-                    <?=$c['active'] ? 'Ativo' : 'Inativo'?>
-                  </span>
+                  <div class="card-number">•••• •••• •••• ••••</div>
                 </div>
-                <div class="progress mb-2" style="height: 8px;">
+                <div>
+                  <div class="card-name"><?=htmlspecialchars($c['name'])?></div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small>FreeCard</small>
+                    <span class="badge bg-<?=$c['active'] ? 'success' : 'secondary'?> text-white" style="font-size: 10px;">
+                      <?=$c['active'] ? 'ATIVO' : 'INATIVO'?>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Informações do cartão -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Utilização</span>
+                  <span class="fw-bold small"><?=round($percentage)?>%</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 10px;">
                   <div class="progress-bar bg-<?=$progressColor?>" style="width: <?=min($percentage, 100)?>%"></div>
                 </div>
-                <div class="d-flex justify-content-between small">
-                  <span>€<?=number_format($c['balance'],2)?> / €<?=number_format($c['limit_amount'],2)?></span>
-                  <span><?=round($percentage)?>%</span>
+                <div class="d-flex justify-content-between mt-2 small">
+                  <span class="text-muted">€<?=number_format($c['balance'],2)?> / €<?=number_format($c['limit_amount'],2)?></span>
+                  <span class="text-success fw-bold">€<?=number_format($available, 2)?> livre</span>
                 </div>
               </div>
             <?php endforeach; ?>
@@ -664,63 +749,62 @@ $categoryColors = [
           <?php endif; ?>
         </div>
       </div>
-    </div>
-  </div>
-
-<!-- Card de Orçamentos - Discreto no final -->
-  <div class="row mt-3">
-    <div class="col-12">
-      <?php
-      // Contar orçamentos ativos
-      $stmt = $pdo->prepare("SELECT COUNT(*) FROM budgets WHERE user_id = :uid AND active = 1");
-      $stmt->execute([':uid' => $uid]);
-      $activeBudgetsCount = $stmt->fetchColumn();
-      
-      if ($activeBudgetsCount > 0): 
-      ?>
-        <div class="card shadow-sm">
-          <div class="card-body py-3 px-4">
-            <div class="d-flex align-items-center justify-content-between">
-              <div class="d-flex align-items-center gap-3">
-                <i class="bi bi-piggy-bank" style="font-size: 24px; color: var(--primary-green);"></i>
-                <div>
-                  <small class="text-muted d-block" style="font-size: 12px;">Orçamentos Ativos</small>
-                  <strong>
-                    <?php if ($activeBudgetsCount == 1): ?>
-                      Tens 1 orçamento definido
-                    <?php else: ?>
-                      Tens <?=$activeBudgetsCount?> orçamentos definidos
-                    <?php endif; ?>
-                  </strong>
+      <!-- Card de Orçamentos -->
+      <div class="row mt-3">
+        <div class="col-12">
+          <?php
+          // Contar orçamentos ativos
+          $stmt = $pdo->prepare("SELECT COUNT(*) FROM budgets WHERE user_id = :uid AND active = 1");
+          $stmt->execute([':uid' => $uid]);
+          $activeBudgetsCount = $stmt->fetchColumn();
+          
+          if ($activeBudgetsCount > 0): 
+          ?>
+            <div class="card shadow-sm">
+              <div class="card-body py-3 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-piggy-bank" style="font-size: 24px; color: var(--primary-green);"></i>
+                    <div>
+                      <small class="text-muted d-block" style="font-size: 12px;">Orçamentos Ativos</small>
+                      <strong>
+                        <?php if ($activeBudgetsCount == 1): ?>
+                          Tens 1 orçamento definido
+                        <?php else: ?>
+                          Tens <?=$activeBudgetsCount?> orçamentos definidos
+                        <?php endif; ?>
+                      </strong>
+                    </div>
+                  </div>
+                  <a href="budgets.php" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-right"></i> Ver Detalhes
+                  </a>
                 </div>
               </div>
-              <a href="budgets.php" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-arrow-right"></i> Ver Detalhes
-              </a>
             </div>
-          </div>
-        </div>
-      <?php else: ?>
-        <div class="card shadow-sm">
-          <div class="card-body py-3 px-4">
-            <div class="d-flex align-items-center justify-content-between">
-              <div class="d-flex align-items-center gap-3">
-                <i class="bi bi-piggy-bank" style="font-size: 24px; color: #95a5a6;"></i>
-                <div>
-                  <small class="text-muted d-block" style="font-size: 12px;">Orçamentos</small>
-                  <strong>Nenhum orçamento definido</strong>
+          <?php else: ?>
+            <div class="card shadow-sm">
+              <div class="card-body py-3 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-piggy-bank" style="font-size: 24px; color: #95a5a6;"></i>
+                    <div>
+                      <small class="text-muted d-block" style="font-size: 12px;">Orçamentos</small>
+                      <strong>Nenhum orçamento definido</strong>
+                    </div>
+                  </div>
+                  <a href="budgets.php" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Criar Orçamento
+                  </a>
                 </div>
               </div>
-              <a href="budgets.php" class="btn btn-sm btn-primary">
-                <i class="bi bi-plus-circle"></i> Criar Orçamento
-              </a>
             </div>
-          </div>
+          <?php endif; ?>
         </div>
-      <?php endif; ?>
+      </div>
+    </div>
     </div>
   </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -731,7 +815,6 @@ document.addEventListener('DOMContentLoaded', function() {
       bar.style.width = bar.dataset.width;
     });
   }, 100);
-
 });
 </script>
 </body>
