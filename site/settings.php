@@ -9,13 +9,22 @@ $currentTheme = getUserTheme($pdo, $uid);
 $message = '';
 $messageType = 'info';
 
+// Função de validação de password
+function validatePassword($password) {
+    if (strlen($password) < 8) return false;
+    if (!preg_match('/[A-Z]/', $password)) return false;
+    if (!preg_match('/[a-z]/', $password)) return false;
+    if (!preg_match('/[0-9]/', $password)) return false;
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) return false;
+    return true;
+}
+
 // Buscar ou criar configurações do utilizador
 $stmt = $pdo->prepare("SELECT * FROM user_settings WHERE user_id = :uid");
 $stmt->execute([':uid' => $uid]);
 $settings = $stmt->fetch();
 
 if (!$settings) {
-    // Criar configurações padrão se não existirem
     $stmt = $pdo->prepare("INSERT INTO user_settings (user_id) VALUES (:uid)");
     $stmt->execute([':uid' => $uid]);
     $stmt = $pdo->prepare("SELECT * FROM user_settings WHERE user_id = :uid");
@@ -23,18 +32,54 @@ if (!$settings) {
     $settings = $stmt->fetch();
 }
 
+// Buscar informações do utilizador
+$stmt = $pdo->prepare("
+    SELECT username, email, created_at, last_password_change, 
+           last_email_change, two_factor_enabled 
+    FROM users 
+    WHERE id = :uid
+");
+$stmt->execute([':uid' => $uid]);
+$user = $stmt->fetch();
+
+// Verificar se pode alterar password/email (30 dias)
+$canChangePassword = true;
+$canChangeEmail = true;
+$daysUntilPasswordChange = 0;
+$daysUntilEmailChange = 0;
+
+if ($user['last_password_change']) {
+    $lastChange = new DateTime($user['last_password_change']);
+    $now = new DateTime();
+    $diff = $now->diff($lastChange);
+    $daysSince = $diff->days;
+    
+    if ($daysSince < 30) {
+        $canChangePassword = false;
+        $daysUntilPasswordChange = 30 - $daysSince;
+    }
+}
+
+if ($user['last_email_change']) {
+    $lastChange = new DateTime($user['last_email_change']);
+    $now = new DateTime();
+    $diff = $now->diff($lastChange);
+    $daysSince = $diff->days;
+    
+    if ($daysSince < 30) {
+        $canChangeEmail = false;
+        $daysUntilEmailChange = 30 - $daysSince;
+    }
+}
+
 // Processar alterações
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $theme = $_POST['theme'] ?? 'light';
-    $notifications = isset($_POST['notifications']) ? 1 : 0;
+    $action = $_POST['action'] ?? '';
+    
+    if ($action === 'update_theme') {
+        $theme = $_POST['theme'] ?? 'light';
+        $notifications = isset($_POST['notifications']) ? 1 : 0;
 
-    // Verificar se houve alterações
-    $hasChanges = false;
-    if ($theme !== $settings['theme'] || $notifications != $settings['notifications']) {
-        $hasChanges = true;
-    }
-
-    if ($hasChanges) {
         try {
             $stmt = $pdo->prepare("
                 UPDATE user_settings
@@ -47,7 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':uid' => $uid
             ]);
 
-            // Atualizar configurações locais
             $settings['theme'] = $theme;
             $settings['notifications'] = $notifications;
 
@@ -57,13 +101,129 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Erro ao atualizar configurações.';
             $messageType = 'danger';
         }
-    } else {
-        $message = 'Nenhuma alteração foi feita.';
-        $messageType = 'info';
+    }
+    
+    elseif ($action === 'change_password') {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        $errors = [];
+        
+        if (!$canChangePassword) {
+            $errors[] = "Só podes alterar a password novamente daqui a {$daysUntilPasswordChange} dia(s).";
+        }
+        
+        // Verificar password atual
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :uid");
+        $stmt->execute([':uid' => $uid]);
+        $userPass = $stmt->fetch();
+        
+        if (!password_verify($currentPassword, $userPass['password_hash'])) {
+            $errors[] = 'A password atual está incorreta.';
+        }
+        
+        if (!validatePassword($newPassword)) {
+            $errors[] = 'A nova password deve ter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais.';
+        }
+        
+        if ($newPassword !== $confirmPassword) {
+            $errors[] = 'As passwords não coincidem.';
+        }
+        
+        if (password_verify($newPassword, $userPass['password_hash'])) {
+            $errors[] = 'A nova password não pode ser igual à atual.';
+        }
+        
+        if (empty($errors)) {
+            try {
+                $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("
+                    UPDATE users 
+                    SET password_hash = :hash, last_password_change = NOW() 
+                    WHERE id = :uid
+                ");
+                $stmt->execute([':hash' => $hash, ':uid' => $uid]);
+                
+                $message = 'Password alterada com sucesso! Próxima alteração disponível em 30 dias.';
+                $messageType = 'success';
+                
+                // Atualizar data
+                $user['last_password_change'] = date('Y-m-d H:i:s');
+                $canChangePassword = false;
+                $daysUntilPasswordChange = 30;
+            } catch (PDOException $e) {
+                $message = 'Erro ao alterar password.';
+                $messageType = 'danger';
+            }
+        } else {
+            $message = implode('<br>', $errors);
+            $messageType = 'danger';
+        }
+    }
+    
+    elseif ($action === 'change_email') {
+        $currentPassword = $_POST['current_password_email'] ?? '';
+        $newEmail = trim($_POST['new_email'] ?? '');
+        
+        $errors = [];
+        
+        if (!$canChangeEmail) {
+            $errors[] = "Só podes alterar o email novamente daqui a {$daysUntilEmailChange} dia(s).";
+        }
+        
+        // Verificar password atual
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :uid");
+        $stmt->execute([':uid' => $uid]);
+        $userPass = $stmt->fetch();
+        
+        if (!password_verify($currentPassword, $userPass['password_hash'])) {
+            $errors[] = 'A password está incorreta.';
+        }
+        
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Email inválido.';
+        }
+        
+        if ($newEmail === $user['email']) {
+            $errors[] = 'O novo email não pode ser igual ao atual.';
+        }
+        
+        // Verificar se email já está em uso
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :uid");
+        $stmt->execute([':email' => $newEmail, ':uid' => $uid]);
+        if ($stmt->fetch()) {
+            $errors[] = 'Este email já está em uso por outra conta.';
+        }
+        
+        if (empty($errors)) {
+            try {
+                $stmt = $pdo->prepare("
+                    UPDATE users 
+                    SET email = :email, last_email_change = NOW() 
+                    WHERE id = :uid
+                ");
+                $stmt->execute([':email' => $newEmail, ':uid' => $uid]);
+                
+                $message = 'Email alterado com sucesso! Próxima alteração disponível em 30 dias.';
+                $messageType = 'success';
+                
+                // Atualizar dados locais
+                $user['email'] = $newEmail;
+                $user['last_email_change'] = date('Y-m-d H:i:s');
+                $canChangeEmail = false;
+                $daysUntilEmailChange = 30;
+            } catch (PDOException $e) {
+                $message = 'Erro ao alterar email.';
+                $messageType = 'danger';
+            }
+        } else {
+            $message = implode('<br>', $errors);
+            $messageType = 'danger';
+        }
     }
 }
 
-// Incluir o tema atual
 $currentTheme = $settings['theme'] ?? 'light';
 ?>
 <!doctype html>
@@ -88,8 +248,7 @@ $currentTheme = $settings['theme'] ?? 'light';
     }
     .navbar { 
       box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-      background: var(--bg-secondary);
-      transition: background-color 0.3s;
+      background: var(--navbar-bg);
     }
     .navbar-brand img { height: 35px; margin-right: 8px; }
     .btn-primary { 
@@ -107,6 +266,13 @@ $currentTheme = $settings['theme'] ?? 'light';
       background: var(--bg-secondary);
       color: var(--text-primary);
       transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+    .card-header-custom {
+      background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+      border-radius: 16px 16px 0 0;
+      padding: 20px 24px;
+      color: white;
     }
     .form-label {
       font-weight: 600;
@@ -164,19 +330,63 @@ $currentTheme = $settings['theme'] ?? 'light';
     .theme-preview input[type="radio"] {
       display: none;
     }
-    .theme-preview.active::after {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--primary-green);
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
     .form-check-input:checked {
       background-color: var(--primary-green);
       border-color: var(--primary-green);
+    }
+    .security-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .security-badge.available {
+      background: rgba(46, 204, 113, 0.1);
+      color: var(--primary-green);
+    }
+    .security-badge.locked {
+      background: rgba(231, 76, 60, 0.1);
+      color: #e74c3c;
+    }
+    .security-badge.coming-soon {
+      background: rgba(52, 152, 219, 0.1);
+      color: #3498db;
+    }
+    .info-box {
+      background: var(--bg-primary);
+      border-left: 4px solid #3498db;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .password-strength {
+      height: 6px;
+      background: var(--bg-hover);
+      border-radius: 3px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .password-strength-bar {
+      height: 100%;
+      width: 0;
+      transition: all 0.4s;
+      border-radius: 3px;
+    }
+    .strength-weak { width: 33%; background: #e74c3c; }
+    .strength-medium { width: 66%; background: #f39c12; }
+    .strength-strong { width: 100%; background: var(--primary-green); }
+    
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    [data-theme="dark"] .form-control::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
     }
   </style>
 </head>
@@ -214,113 +424,331 @@ $currentTheme = $settings['theme'] ?? 'light';
 
 <div class="container mt-4 mb-5">
   <div class="row justify-content-center">
-    <div class="col-12 col-lg-8">
+    <div class="col-12 col-lg-10">
       <div class="mb-4">
         <a href="dashboard.php" class="text-decoration-none" style="color: var(--text-secondary);">
           <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
         </a>
       </div>
 
-      <div class="card">
-        <div class="card-header" style="background: linear-gradient(135deg, var(--primary-green), var(--dark-green)); border-radius: 16px 16px 0 0; padding: 24px;">
-          <h4 class="mb-0 text-white"><i class="bi bi-gear"></i> Configurações</h4>
+      <h2 class="mb-4"><i class="bi bi-gear"></i> Configurações</h2>
+
+      <?php if ($message): ?>
+        <div class="alert alert-<?=$messageType?> alert-dismissible fade show">
+          <i class="bi bi-<?=$messageType === 'success' ? 'check-circle' : 'exclamation-circle'?>"></i>
+          <?=$message?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
+      <?php endif; ?>
 
-        <?php if ($message): ?>
-          <div class="alert alert-<?=$messageType?> alert-dismissible fade show m-4 mb-0">
-            <i class="bi bi-<?=$messageType === 'success' ? 'check-circle' : 'info-circle'?>"></i>
-            <?=htmlspecialchars($message)?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        <?php endif; ?>
-
-        <form method="post">
-          <!-- Aparência -->
+      <!-- SEGURANÇA -->
+      <div class="card">
+        <div class="card-header-custom">
+          <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Segurança</h5>
+        </div>
+        <div class="card-body p-0">
+          
+          <!-- Alterar Password -->
           <div class="setting-item">
             <div class="d-flex justify-content-between align-items-start mb-3">
               <div>
-                <h5 class="mb-1"><i class="bi bi-palette"></i> Aparência</h5>
-                <p class="text-muted small mb-0">Escolhe o tema que preferes para a interface</p>
+                <h6 class="mb-1">
+                  <i class="bi bi-key"></i> Alterar Password
+                  <?php if ($canChangePassword): ?>
+                    <span class="security-badge available">
+                      <i class="bi bi-check-circle"></i> Disponível
+                    </span>
+                  <?php else: ?>
+                    <span class="security-badge locked">
+                      <i class="bi bi-lock"></i> Bloqueado por <?=$daysUntilPasswordChange?> dia(s)
+                    </span>
+                  <?php endif; ?>
+                </h6>
+                <p class="text-muted small mb-0">
+                  Última alteração: 
+                  <?php if ($user['last_password_change']): ?>
+                    <?=date('d/m/Y', strtotime($user['last_password_change']))?>
+                  <?php else: ?>
+                    Nunca
+                  <?php endif; ?>
+                </p>
               </div>
+              <button 
+                class="btn btn-sm btn-outline-primary" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#changePasswordForm"
+                <?=!$canChangePassword ? 'disabled' : ''?>
+              >
+                <i class="bi bi-pencil"></i> Alterar
+              </button>
             </div>
             
-            <div class="d-flex gap-3">
-              <label class="theme-preview theme-preview-light <?=$currentTheme === 'light' ? 'active' : ''?>">
-                <input type="radio" name="theme" value="light" <?=$currentTheme === 'light' ? 'checked' : ''?>>
-                <div class="p-2">
-                  <small class="fw-bold" style="color: #2c3e50;">Claro</small>
+            <div class="collapse" id="changePasswordForm">
+              <form method="post" class="mt-3">
+                <input type="hidden" name="action" value="change_password">
+                
+                <div class="mb-3">
+                  <label class="form-label">Password Atual *</label>
+                  <input 
+                    type="password" 
+                    name="current_password" 
+                    class="form-control" 
+                    placeholder="Introduz a tua password atual"
+                    required
+                  >
                 </div>
-              </label>
-              
-              <label class="theme-preview theme-preview-dark <?=$currentTheme === 'dark' ? 'active' : ''?>">
-                <input type="radio" name="theme" value="dark" <?=$currentTheme === 'dark' ? 'checked' : ''?>>
-                <div class="p-2">
-                  <small class="fw-bold" style="color: #ecf0f1;">Escuro</small>
+                
+                <div class="mb-3">
+                  <label class="form-label">Nova Password *</label>
+                  <input 
+                    type="password" 
+                    name="new_password" 
+                    id="new_password"
+                    class="form-control" 
+                    placeholder="Cria uma password segura"
+                    required
+                  >
+                  <div class="password-strength">
+                    <div class="password-strength-bar" id="strength-bar"></div>
+                  </div>
+                  <small class="text-muted">Mínimo 8 caracteres, incluindo maiúsculas, minúsculas, números e especiais</small>
                 </div>
-              </label>
+                
+                <div class="mb-3">
+                  <label class="form-label">Confirmar Nova Password *</label>
+                  <input 
+                    type="password" 
+                    name="confirm_password" 
+                    class="form-control" 
+                    placeholder="Repete a nova password"
+                    required
+                  >
+                </div>
+                
+                <div class="info-box">
+                  <small>
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Política de Segurança:</strong> Por razões de segurança, só podes alterar a password uma vez a cada 30 dias.
+                  </small>
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Alterar Password
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#changePasswordForm">
+                    Cancelar
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 
-          <!-- Notificações -->
+          <!-- Alterar Email -->
+          <div class="setting-item">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h6 class="mb-1">
+                  <i class="bi bi-envelope"></i> Alterar Email
+                  <?php if ($canChangeEmail): ?>
+                    <span class="security-badge available">
+                      <i class="bi bi-check-circle"></i> Disponível
+                    </span>
+                  <?php else: ?>
+                    <span class="security-badge locked">
+                      <i class="bi bi-lock"></i> Bloqueado por <?=$daysUntilEmailChange?> dia(s)
+                    </span>
+                  <?php endif; ?>
+                </h6>
+                <p class="text-muted small mb-0">
+                  Email atual: <strong><?=htmlspecialchars($user['email'])?></strong>
+                </p>
+                <p class="text-muted small mb-0">
+                  Última alteração: 
+                  <?php if ($user['last_email_change']): ?>
+                    <?=date('d/m/Y', strtotime($user['last_email_change']))?>
+                  <?php else: ?>
+                    Nunca
+                  <?php endif; ?>
+                </p>
+              </div>
+              <button 
+                class="btn btn-sm btn-outline-primary" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#changeEmailForm"
+                <?=!$canChangeEmail ? 'disabled' : ''?>
+              >
+                <i class="bi bi-pencil"></i> Alterar
+              </button>
+            </div>
+            
+            <div class="collapse" id="changeEmailForm">
+              <form method="post" class="mt-3">
+                <input type="hidden" name="action" value="change_email">
+                
+                <div class="mb-3">
+                  <label class="form-label">Password (para confirmar) *</label>
+                  <input 
+                    type="password" 
+                    name="current_password_email" 
+                    class="form-control" 
+                    placeholder="Introduz a tua password"
+                    required
+                  >
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label">Novo Email *</label>
+                  <input 
+                    type="email" 
+                    name="new_email" 
+                    class="form-control" 
+                    placeholder="novo@email.com"
+                    required
+                  >
+                </div>
+                
+                <div class="info-box">
+                  <small>
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Política de Segurança:</strong> Por razões de segurança, só podes alterar o email uma vez a cada 30 dias.
+                  </small>
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Alterar Email
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#changeEmailForm">
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Autenticação de 2 Fatores -->
           <div class="setting-item">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h5 class="mb-1"><i class="bi bi-bell"></i> Notificações (em desenvolvimento)</h5>
-                <p class="text-muted small mb-0">Recebe alertas quando te aproximas dos limites dos cartões</p>
+                <h6 class="mb-1">
+                  <i class="bi bi-shield-check"></i> Autenticação de 2 Fatores
+                  <span class="security-badge coming-soon">
+                    <i class="bi bi-clock-history"></i> Em breve
+                  </span>
+                </h6>
+                <p class="text-muted small mb-0">Adiciona uma camada extra de segurança à tua conta</p>
               </div>
               <div class="form-check form-switch">
                 <input 
                   class="form-check-input" 
                   type="checkbox" 
-                  name="notifications" 
-                  id="notifications"
-                  <?=$settings['notifications'] ? 'checked' : ''?>
+                  disabled
                   style="width: 3em; height: 1.5em;"
                 >
               </div>
             </div>
+            <div class="info-box mt-3">
+              <small>
+                <i class="bi bi-info-circle"></i>
+                <strong>Funcionalidade em desenvolvimento:</strong> A autenticação de 2 fatores estará disponível numa próxima atualização.
+              </small>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Informações da Conta -->
-          <div class="setting-item">
-            <h5 class="mb-3"><i class="bi bi-person"></i> Informações da Conta</h5>
-            <div class="p-3 rounded" style="background: var(--bg-primary);">
-              <div class="row">
-                <div class="col-md-6 mb-2">
-                  <small class="text-muted">Nome de utilizador</small>
-                  <div class="fw-semibold"><?=htmlspecialchars($_SESSION['username'])?></div>
-                </div>
-                <div class="col-md-6 mb-2">
-                  <small class="text-muted">Membro desde</small>
-                  <div class="fw-semibold">
-                    <?php
-                    $stmt = $pdo->prepare("SELECT created_at FROM users WHERE id = :uid");
-                    $stmt->execute([':uid' => $uid]);
-                    $user = $stmt->fetch();
-                    echo date('d/m/Y', strtotime($user['created_at']));
-                    ?>
+      <!-- APARÊNCIA -->
+      <div class="card">
+        <div class="card-header-custom">
+          <h5 class="mb-0"><i class="bi bi-palette"></i> Aparência</h5>
+        </div>
+        <form method="post">
+          <input type="hidden" name="action" value="update_theme">
+          <div class="card-body p-0">
+            <div class="setting-item">
+              <div class="mb-3">
+                <h6 class="mb-1"><i class="bi bi-moon-stars"></i> Tema</h6>
+                <p class="text-muted small mb-3">Escolhe o tema que preferes para a interface</p>
+              </div>
+              
+              <div class="d-flex gap-3">
+                <label class="theme-preview theme-preview-light <?=$currentTheme === 'light' ? 'active' : ''?>">
+                  <input type="radio" name="theme" value="light" <?=$currentTheme === 'light' ? 'checked' : ''?>>
+                  <div class="p-2">
+                    <small class="fw-bold" style="color: #2c3e50;">Claro</small>
                   </div>
+                </label>
+                
+                <label class="theme-preview theme-preview-dark <?=$currentTheme === 'dark' ? 'active' : ''?>">
+                  <input type="radio" name="theme" value="dark" <?=$currentTheme === 'dark' ? 'checked' : ''?>>
+                  <div class="p-2">
+                    <small class="fw-bold" style="color: #ecf0f1;">Escuro</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1"><i class="bi bi-bell"></i> Notificações - em desenvolvimento</h6>
+                  <p class="text-muted small mb-0">Recebe alertas quando te aproximas dos limites dos cartões</p>
+                </div>
+                <div class="form-check form-switch">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    name="notifications" 
+                    <?=$settings['notifications'] ? 'checked' : ''?>
+                    style="width: 3em; height: 1.5em;"
+                  >
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Botões de Ação -->
+          
           <div class="card-body">
             <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary btn-lg">
+              <button type="submit" class="btn btn-primary">
                 <i class="bi bi-check-circle"></i> Guardar Alterações
               </button>
-              <a href="dashboard.php" class="btn btn-outline-secondary">
-                Cancelar
-              </a>
             </div>
           </div>
         </form>
       </div>
 
-      <!-- Informações Adicionais -->
-      <div class="card mt-4">
+      <!-- INFORMAÇÕES DA CONTA -->
+      <div class="card">
+        <div class="card-header-custom">
+          <h5 class="mb-0"><i class="bi bi-person"></i> Informações da Conta</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Nome de utilizador</small>
+              <div class="fw-semibold"><?=htmlspecialchars($user['username'])?></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Email</small>
+              <div class="fw-semibold"><?=htmlspecialchars($user['email'])?></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Membro desde</small>
+              <div class="fw-semibold"><?=date('d/m/Y', strtotime($user['created_at']))?></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <small class="text-muted">Autenticação 2FA</small>
+              <div class="fw-semibold">
+                <?=$user['two_factor_enabled'] ? '✅ Ativada' : '❌ Desativada'?>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOBRE -->
+      <div class="card">
         <div class="card-body">
           <h6 class="mb-3"><i class="bi bi-info-circle"></i> Sobre o FreeCard</h6>
           <p class="text-muted small mb-2">Versão: 1.0.0</p>
@@ -340,14 +768,37 @@ $currentTheme = $settings['theme'] ?? 'light';
 document.querySelectorAll('input[name="theme"]').forEach(radio => {
   radio.addEventListener('change', function() {
     document.documentElement.setAttribute('data-theme', this.value);
-    
-    // Atualizar classes ativas
     document.querySelectorAll('.theme-preview').forEach(preview => {
       preview.classList.remove('active');
     });
     this.closest('.theme-preview').classList.add('active');
   });
 });
+
+// Password strength indicator
+const passwordInput = document.getElementById('new_password');
+if (passwordInput) {
+  passwordInput.addEventListener('input', function(e) {
+    const password = e.target.value;
+    const strengthBar = document.getElementById('strength-bar');
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    strengthBar.className = 'password-strength-bar';
+    if (strength >= 4) {
+      strengthBar.classList.add('strength-strong');
+    } else if (strength >= 2) {
+      strengthBar.classList.add('strength-medium');
+    } else if (strength >= 1) {
+      strengthBar.classList.add('strength-weak');
+    }
+  });
+}
 </script>
 </body>
 </html>
