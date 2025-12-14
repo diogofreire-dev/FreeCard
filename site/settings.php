@@ -648,12 +648,6 @@ $currentTheme = $settings['theme'] ?? 'light';
                 >
               </div>
             </div>
-            <div class="info-box mt-3">
-              <small>
-                <i class="bi bi-info-circle"></i>
-                <strong>Funcionalidade em desenvolvimento:</strong> A autenticação de 2 fatores estará disponível numa próxima atualização.
-              </small>
-            </div>
           </div>
         </div>
       </div>
@@ -692,7 +686,7 @@ $currentTheme = $settings['theme'] ?? 'light';
             <div class="setting-item">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 class="mb-1"><i class="bi bi-bell"></i> Notificações - em desenvolvimento</h6>
+                  <h6 class="mb-1"><i class="bi bi-bell"></i> Notificações </h6>
                   <p class="text-muted small mb-0">Recebe alertas quando te aproximas dos limites dos cartões</p>
                 </div>
                 <div class="form-check form-switch">

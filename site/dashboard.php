@@ -11,6 +11,11 @@ if (!$uid) {
     exit;
 }
 
+// Buscar configurações do utilizador
+$stmt = $pdo->prepare("SELECT * FROM user_settings WHERE user_id = :uid");
+$stmt->execute([':uid' => $uid]);
+$settings = $stmt->fetch();
+
 // Total gasto no mês
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(amount),0) AS total_month 
@@ -491,7 +496,7 @@ $categoryColors = [
 </nav>
 
 <div class="container mt-4 pb-5">
-  <?php if (!empty($alerts)): ?>
+  <?php if (!empty($alerts) && ($settings['notifications'] ?? 1)): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       <strong><i class="bi bi-exclamation-triangle"></i> Alertas:</strong>
       <ul class="mb-0 mt-2">
