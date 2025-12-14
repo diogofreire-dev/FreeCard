@@ -263,3 +263,54 @@
 [data-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
+
+/* Fix para dropdowns ficarem sempre no topo */
+.dropdown-menu {
+  z-index: 1050 !important;
+}
+
+.navbar .dropdown {
+  position: relative;
+  z-index: 1040;
+}
+
+/* Garantir que a navbar está acima do background */
+.navbar {
+  position: sticky !important;
+  z-index: 1030 !important;
+}
+
+/* Container não deve interferir com dropdowns */
+.container {
+  z-index: auto !important;
+}
+
+/* Cards e outros elementos */
+.card {
+  z-index: auto;
+}
+/* ========== FIX PARA DROPDOWNS ========== */
+/* Garante que dropdowns ficam sempre visíveis */
+.dropdown-menu {
+  z-index: 1050 !important;
+  position: absolute !important;
+}
+
+.navbar .dropdown {
+  position: static;
+}
+
+.navbar-nav .dropdown-menu {
+  position: absolute !important;
+}
+
+/* Ajustar z-index da navbar para não interferir */
+.navbar {
+  z-index: 1030 !important;
+}
+
+/* Container não cria novo stacking context */
+.container {
+  position: relative;
+  z-index: auto !important;
+}
