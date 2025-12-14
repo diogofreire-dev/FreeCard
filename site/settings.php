@@ -236,6 +236,84 @@ $currentTheme = $settings['theme'] ?? 'light';
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/theme.css">
   <style>
+    /* ========== BACKGROUND ANIMADO ========== */
+    body {
+      position: relative;
+      min-height: 100vh;
+    }
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    [data-theme="light"] body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e8f5e9 100%);
+      z-index: -1;
+    }
+    [data-theme="dark"] body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1d29 0%, #252936 50%, #1a1d29 100%);
+      z-index: -1;
+    }
+    .floating-shape {
+      position: absolute;
+      border-radius: 50%;
+      animation: float 20s infinite ease-in-out;
+    }
+    [data-theme="light"] .floating-shape {
+      background: rgba(46, 204, 113, 0.08);
+    }
+    [data-theme="dark"] .floating-shape {
+      background: rgba(46, 204, 113, 0.05);
+    }
+    .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
+    .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
+    .shape4 { width: 100px; height: 100px; bottom: 20%; left: 15%; animation-delay: 7s; }
+    .shape5 { width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 3s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: rise 15s infinite ease-in;
+    }
+    [data-theme="light"] .particle { background: rgba(46, 204, 113, 0.4); }
+    [data-theme="dark"] .particle { background: rgba(46, 204, 113, 0.3); }
+    @keyframes rise {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+    }
+    .navbar, .container { position: relative; z-index: 1; }
+    @media (max-width: 768px) {
+      .floating-shape { opacity: 0.4; animation-duration: 25s; }
+      .particle { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .floating-shape, .particle { animation: none; opacity: 0.2; }
+    }
     :root {
       --primary-green: #2ecc71;
       --dark-green: #27ae60;
@@ -391,6 +469,14 @@ $currentTheme = $settings['theme'] ?? 'light';
   </style>
 </head>
 <body>
+  <!-- Background animado -->
+<div class="bg-animation">
+  <div class="floating-shape shape1"></div>
+  <div class="floating-shape shape2"></div>
+  <div class="floating-shape shape3"></div>
+  <div class="floating-shape shape4"></div>
+  <div class="floating-shape shape5"></div>
+</div>
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
     <a class="navbar-brand fw-bold" href="index.php">
@@ -793,6 +879,20 @@ if (passwordInput) {
     }
   });
 }
+
+(function() {
+  if (window.innerWidth <= 768) return;
+  const container = document.querySelector('.bg-animation');
+  if (!container) return;
+  for (let i = 0; i < 15; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+    container.appendChild(particle);
+  }
+})();
 </script>
 </body>
 </html>
