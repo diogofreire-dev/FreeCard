@@ -140,8 +140,7 @@ CREATE TABLE IF NOT EXISTS payment_reminders (
   
   -- Estado
   active TINYINT(1) DEFAULT 1 COMMENT 'Lembrete ativo',
-  auto_pay TINYINT(1) DEFAULT 0 COMMENT 'Criar transação automaticamente na data',
-  
+
   -- Notificações
   notify_days_before INT DEFAULT 3 COMMENT 'Notificar X dias antes do vencimento',
   

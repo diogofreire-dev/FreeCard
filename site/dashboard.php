@@ -6,6 +6,12 @@ $uid = $_SESSION['user_id'] ?? null;
 require_once __DIR__ . '/theme_helper.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
+// Buscar configurações do usuário
+$stmt = $pdo->prepare("SELECT notifications FROM user_settings WHERE user_id = :uid");
+$stmt->execute([':uid' => $uid]);
+$userSettings = $stmt->fetch();
+$notificationsEnabled = $userSettings['notifications'] ?? 1; // padrão ativado se não definido
+
 if (!$uid) {
     header('Location: login.php');
     exit;
@@ -510,6 +516,9 @@ $categoryColors = [
     [data-theme="dark"] .progress {
       background: var(--bg-hover);
     }
+    [data-theme="dark"] .alert-link {
+      color: #0dcaf0 !important;
+    }
   </style>
 </head>
 <body>
@@ -557,7 +566,7 @@ $categoryColors = [
 </nav>
 
 <div class="container mt-4 pb-5">
-  <?php if (!empty($alerts)): ?>
+  <?php if ($notificationsEnabled && !empty($alerts)): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       <strong><i class="bi bi-exclamation-triangle"></i> Alertas:</strong>
       <ul class="mb-0 mt-2">
@@ -593,14 +602,14 @@ $categoryColors = [
     $soonReminders = array_filter($upcomingReminders, fn($r) => $r['status'] === 'upcoming');
     ?>
 
-    <?php if (!empty($overdueReminders)): ?>
+    <?php if ($notificationsEnabled && !empty($overdueReminders)): ?>
       <div class="alert alert-danger alert-dismissible fade show">
         <strong><i class="bi bi-exclamation-triangle"></i> Pagamentos Atrasados:</strong>
         <ul class="mb-0 mt-2">
           <?php foreach($overdueReminders as $r): ?>
             <li>
-              <strong><?=htmlspecialchars($r['name'])?></strong> - 
-              €<?=number_format($r['amount'], 2)?> 
+              <strong><?=htmlspecialchars($r['name'])?></strong> -
+              €<?=number_format($r['amount'], 2)?>
               (<?=abs($r['days_until'])?> dia(s) atrasado)
               <a href="reminders.php" class="alert-link">Ver detalhes</a>
             </li>
@@ -610,14 +619,14 @@ $categoryColors = [
       </div>
     <?php endif; ?>
 
-    <?php if (!empty($soonReminders)): ?>
+    <?php if ($notificationsEnabled && !empty($soonReminders)): ?>
       <div class="alert alert-warning alert-dismissible fade show">
         <strong><i class="bi bi-clock-history"></i> Vencimentos Próximos:</strong>
         <ul class="mb-0 mt-2">
           <?php foreach($soonReminders as $r): ?>
             <li>
-              <strong><?=htmlspecialchars($r['name'])?></strong> - 
-              €<?=number_format($r['amount'], 2)?> 
+              <strong><?=htmlspecialchars($r['name'])?></strong> -
+              €<?=number_format($r['amount'], 2)?>
               (vence em <?=$r['days_until']?> dia(s))
               <a href="reminders.php" class="alert-link">Gerir</a>
             </li>

@@ -151,6 +151,11 @@
   color: #3498db;
 }
 
+[data-theme="dark"] .alert .alert-link {
+  color: #f39c12 !important;
+  text-decoration: underline !important;
+}
+
 [data-theme="dark"] .btn-close {
   filter: invert(1);
 }

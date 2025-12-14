@@ -93,10 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ");
                     $stmt->execute([
                         ':uid' => $uid,
-                        ':card_id' => $reminder['card_id'],
+                        ':card_id' => $reminder['card_id'] ?: null,
                         ':amount' => $reminder['amount'],
                         ':desc' => $reminder['name'],
-                        ':category' => $reminder['category'],
+                        ':category' => $reminder['category'] ?: null,
                         ':tdate' => $paid_date
                     ]);
                     $transaction_id = $pdo->lastInsertId();
@@ -151,17 +151,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $nextDate->modify('+1 year');
                             break;
                     }
-                    
+
                     $stmt = $pdo->prepare("
-                        UPDATE payment_reminders 
-                        SET last_paid_date = :pdate, 
+                        UPDATE payment_reminders
+                        SET last_paid_date = :pdate,
                             due_date = :next_due,
-                            next_due_date = :next_due
+                            next_due_date = :next_due_date
                         WHERE id = :id
                     ");
                     $stmt->execute([
                         ':pdate' => $paid_date,
                         ':next_due' => $nextDate->format('Y-m-d'),
+                        ':next_due_date' => $nextDate->format('Y-m-d'),
                         ':id' => $reminder_id
                     ]);
                 }
@@ -174,6 +175,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->rollBack();
             $message = 'Erro ao registar pagamento: ' . $e->getMessage();
             $messageType = 'danger';
+        }
+    }
+    
+    elseif ($action === 'edit') {
+        $reminder_id = intval($_POST['reminder_id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+        $category = trim($_POST['category'] ?? '');
+        $card_id = !empty($_POST['card_id']) ? intval($_POST['card_id']) : null;
+        $due_date = $_POST['due_date'] ?? '';
+        $recurrence = $_POST['recurrence'] ?? 'once';
+        $notify_days = intval($_POST['notify_days_before'] ?? 3);
+        
+        if ($amount > 0 && strlen($name) >= 3 && $due_date) {
+            try {
+                // Calcular next_due_date baseado na recorrência
+                $next_due = $due_date;
+                if ($recurrence !== 'once') {
+                    $dateObj = new DateTime($due_date);
+                    switch($recurrence) {
+                        case 'weekly':
+                            $dateObj->modify('+1 week');
+                            break;
+                        case 'monthly':
+                            $dateObj->modify('+1 month');
+                            break;
+                        case 'yearly':
+                            $dateObj->modify('+1 year');
+                            break;
+                    }
+                    $next_due = $dateObj->format('Y-m-d');
+                }
+                
+                $stmt = $pdo->prepare("
+                    UPDATE payment_reminders 
+                    SET name = :name, amount = :amount, category = :category, 
+                        card_id = :card_id, due_date = :due_date, recurrence = :recurrence,
+                        notify_days_before = :notify, next_due_date = :next_due
+                    WHERE id = :id AND user_id = :uid
+                ");
+                $stmt->execute([
+                    ':id' => $reminder_id,
+                    ':uid' => $uid,
+                    ':name' => $name,
+                    ':amount' => $amount,
+                    ':category' => $category ?: null,
+                    ':card_id' => $card_id,
+                    ':due_date' => $due_date,
+                    ':recurrence' => $recurrence,
+                    ':notify' => $notify_days,
+                    ':next_due' => $next_due
+                ]);
+                
+                $message = 'Lembrete atualizado com sucesso!';
+                $messageType = 'success';
+            } catch (PDOException $e) {
+                $message = 'Erro ao atualizar lembrete.';
+                $messageType = 'danger';
+            }
         }
     }
     
@@ -264,7 +324,6 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/theme.css">
   <style>
-    /* Background animado (mesmo código das outras páginas) */
     body { position: relative; min-height: 100vh; }
     .bg-animation {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -406,7 +465,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i> <?=htmlspecialchars($_SESSION['username'])?>
           </a>
-          <ul class="dropdown-menu">
+          <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
@@ -623,93 +682,84 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
   </div>
 </div>
 
-<?php
-// Template do card de lembrete (usado no loop)
-if (false): // Não executar, apenas definir o template
-?>
-<div class="reminder-card <?=$r['status']?> <?=!$r['active'] ? 'opacity-50' : ''?>">
-  <div class="d-flex justify-content-between align-items-start mb-3">
-    <div class="flex-grow-1">
-      <h5 class="mb-1">
-        <?=htmlspecialchars($r['name'])?>
-        <?php if ($r['recurrence'] !== 'once'): ?>
-          <span class="recurrence-badge">
-            <i class="bi bi-arrow-repeat"></i>
-            <?php
-              echo match($r['recurrence']) {
-                'weekly' => 'Semanal',
-                'monthly' => 'Mensal',
-                'yearly' => 'Anual',
-                default => ''
-              };
-            ?>
-          </span>
-        <?php endif; ?>
-      </h5>
-      <div class="d-flex gap-2 align-items-center flex-wrap">
-        <span class="status-badge <?=$r['status']?>">
-          <i class="bi bi-<?=match($r['status']) {
-            'overdue' => 'exclamation-triangle',
-            'upcoming' => 'clock-history',
-            default => 'calendar-check'
-          }?>"></i>
-          <?php
-            $dueDate = new DateTime($r['due_date']);
-            $today = new DateTime();
-            $diff = $today->diff($dueDate);
-            
-            if ($r['status'] === 'overdue') {
-              echo $diff->days . ' dia(s) atrasado';
-            } elseif ($r['status'] === 'upcoming') {
-              echo 'Vence em ' . $diff->days . ' dia(s)';
-            } else {
-              echo 'Vence: ' . $dueDate->format('d/m/Y');
-            }
-          ?>
-        </span>
-        
-        <?php if ($r['category']): ?>
-          <span class="badge bg-secondary"><?=htmlspecialchars($r['category'])?></span>
-        <?php endif; ?>
-        
-        <?php if ($r['card_name']): ?>
-          <small class="text-muted">
-            <i class="bi bi-credit-card"></i> <?=htmlspecialchars($r['card_name'])?>
-          </small>
-        <?php endif; ?>
+<!-- Modal Editar Lembrete -->
+<div class="modal fade" id="editReminderModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background: var(--bg-secondary); border: none; border-radius: 20px;">
+      <div class="modal-header" style="border: none;">
+        <h5 class="modal-title" style="color: var(--text-primary);">
+          <i class="bi bi-pencil"></i> Editar Lembrete
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
+      <form method="post">
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="reminder_id" id="edit_reminder_id">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome do Pagamento *</label>
+            <input type="text" name="name" id="edit_name" class="form-control" required>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Valor (€) *</label>
+              <input type="number" name="amount" id="edit_amount" class="form-control" step="0.01" min="0.01" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Data de Vencimento *</label>
+              <input type="date" name="due_date" id="edit_due_date" class="form-control" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Recorrência</label>
+            <select name="recurrence" id="edit_recurrence" class="form-select">
+              <option value="once">Única vez</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensal</option>
+              <option value="yearly">Anual</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Categoria (opcional)</label>
+            <select name="category" id="edit_category" class="form-select">
+              <option value="">Sem categoria</option>
+              <?php foreach($categories as $cat): ?>
+                <option value="<?=htmlspecialchars($cat)?>"><?=htmlspecialchars($cat)?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Cartão (opcional)</label>
+            <select name="card_id" id="edit_card_id" class="form-select">
+              <option value="">Dinheiro / A definir</option>
+              <?php foreach($cards as $c): ?>
+                <option value="<?=$c['id']?>"><?=htmlspecialchars($c['name'])?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Notificar com quantos dias de antecedência?</label>
+            <select name="notify_days_before" id="edit_notify_days" class="form-select">
+              <option value="0">No dia</option>
+              <option value="1">1 dia antes</option>
+              <option value="3">3 dias antes</option>
+              <option value="7">7 dias antes</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="border: none;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Alterações</button>
+        </div>
+      </form>
     </div>
-    <div class="text-end ms-3">
-      <h4 class="mb-0 text-danger">€<?=number_format($r['amount'], 2)?></h4>
-    </div>
-  </div>
-  
-  <div class="d-flex gap-2 justify-content-end">
-    <?php if ($r['active'] && ($r['status'] === 'overdue' || $r['status'] === 'upcoming')): ?>
-      <button type="button" class="btn btn-sm btn-success" onclick="openMarkPaidModal(<?=$r['id']?>)">
-        <i class="bi bi-check-circle"></i> Marcar como Pago
-      </button>
-    <?php endif; ?>
-    
-    <form method="post" class="d-inline">
-      <input type="hidden" name="action" value="toggle">
-      <input type="hidden" name="reminder_id" value="<?=$r['id']?>">
-      <button type="submit" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-<?=$r['active'] ? 'pause' : 'play'?>-circle"></i>
-        <?=$r['active'] ? 'Desativar' : 'Ativar'?>
-      </button>
-    </form>
-    
-    <form method="post" class="d-inline" onsubmit="return confirm('Tens a certeza?');">
-      <input type="hidden" name="action" value="delete">
-      <input type="hidden" name="reminder_id" value="<?=$r['id']?>">
-      <button type="submit" class="btn btn-sm btn-outline-danger">
-        <i class="bi bi-trash"></i>
-      </button>
-    </form>
   </div>
 </div>
-<?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -718,12 +768,20 @@ function openMarkPaidModal(reminderId) {
   var modal = new bootstrap.Modal(document.getElementById('markPaidModal'));
   modal.show();
 }
+
+function openEditModal(reminder) {
+  document.getElementById('edit_reminder_id').value = reminder.id;
+  document.getElementById('edit_name').value = reminder.name;
+  document.getElementById('edit_amount').value = reminder.amount;
+  document.getElementById('edit_due_date').value = reminder.due_date;
+  document.getElementById('edit_recurrence').value = reminder.recurrence;
+  document.getElementById('edit_category').value = reminder.category || '';
+  document.getElementById('edit_card_id').value = reminder.card_id || '';
+  document.getElementById('edit_notify_days').value = reminder.notify_days_before;
+  
+  var modal = new bootstrap.Modal(document.getElementById('editReminderModal'));
+  modal.show();
+}
 </script>
 </body>
 </html>
-
-<?php
-// reminder_card.php (template separado para os cards)
-// Criar este ficheiro no mesmo diretório com o código do card
-// (o código está no bloco de template acima entre if(false))
-?>

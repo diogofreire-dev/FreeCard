@@ -74,6 +74,10 @@
       </button>
     <?php endif; ?>
     
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditModal(<?=htmlspecialchars(json_encode($r))?>)">
+      <i class="bi bi-pencil"></i> Editar
+    </button>
+    
     <form method="post" class="d-inline">
       <input type="hidden" name="action" value="toggle">
       <input type="hidden" name="reminder_id" value="<?=$r['id']?>">
