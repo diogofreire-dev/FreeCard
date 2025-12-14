@@ -11,11 +11,6 @@ if (!$uid) {
     exit;
 }
 
-// Buscar configurações do utilizador
-$stmt = $pdo->prepare("SELECT * FROM user_settings WHERE user_id = :uid");
-$stmt->execute([':uid' => $uid]);
-$settings = $stmt->fetch();
-
 // Total gasto no mês
 $stmt = $pdo->prepare("
     SELECT COALESCE(SUM(amount),0) AS total_month 
@@ -80,21 +75,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([':uid' => $uid]);
 $biggestExpense = $stmt->fetch();
 
-// Atividade dos últimos 7 dias
-$stmt = $pdo->prepare("
-    SELECT 
-        DATE(created_at) as day,
-        SUM(amount) as total,
-        COUNT(*) as count
-    FROM transactions 
-    WHERE user_id = :uid 
-    AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-    GROUP BY DATE(created_at)
-    ORDER BY day ASC
-");
-$stmt->execute([':uid' => $uid]);
-$last7Days = $stmt->fetchAll();
-
 // Últimos registos
 $stmt = $pdo->prepare("
     SELECT t.*, c.name AS card_name
@@ -144,9 +124,7 @@ foreach ($cards as $card) {
     }
 }
 
-// ============================================
-// ORÇAMENTOS - Buscar orçamento ativo mais recente
-// ============================================
+// ORÇAMENTOS
 $stmt = $pdo->prepare("
     SELECT
         b.*,
@@ -171,7 +149,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([':uid' => $uid]);
 $mainBudget = $stmt->fetch();
 
-// Calcular percentagem e alertas do orçamento
 $budgetPercentage = 0;
 $budgetRemaining = 0;
 $budgetAlert = null;
@@ -195,7 +172,6 @@ if ($mainBudget) {
     }
 }
 
-// Cores para categorias
 $categoryColors = [
     'Compras' => '#3498db',
     'Alimentação' => '#e74c3c',
@@ -218,13 +194,92 @@ $categoryColors = [
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/theme.css">
 <style>
+    /* ========== BACKGROUND ANIMADO ========== */
+    body {
+      position: relative;
+      min-height: 100vh;
+    }
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    [data-theme="light"] body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e8f5e9 100%);
+      z-index: -1;
+    }
+    [data-theme="dark"] body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1d29 0%, #252936 50%, #1a1d29 100%);
+      z-index: -1;
+    }
+    .floating-shape {
+      position: absolute;
+      border-radius: 50%;
+      animation: float 20s infinite ease-in-out;
+    }
+    [data-theme="light"] .floating-shape {
+      background: rgba(46, 204, 113, 0.08);
+    }
+    [data-theme="dark"] .floating-shape {
+      background: rgba(46, 204, 113, 0.05);
+    }
+    .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
+    .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
+    .shape4 { width: 100px; height: 100px; bottom: 20%; left: 15%; animation-delay: 7s; }
+    .shape5 { width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 3s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: rise 15s infinite ease-in;
+    }
+    [data-theme="light"] .particle { background: rgba(46, 204, 113, 0.4); }
+    [data-theme="dark"] .particle { background: rgba(46, 204, 113, 0.3); }
+    @keyframes rise {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+    }
+    .navbar, .container { position: relative; z-index: 1; }
+    @media (max-width: 768px) {
+      .floating-shape { opacity: 0.4; animation-duration: 25s; }
+      .particle { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .floating-shape, .particle { animation: none; opacity: 0.2; }
+    }
+    /* ========== FIM BACKGROUND ========== */
+
     :root {
       --primary-green: #2ecc71;
       --dark-green: #27ae60;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-primary);
       color: var(--text-primary);
     }
     .card { 
@@ -259,7 +314,6 @@ $categoryColors = [
     }
     .text-primary { color: var(--primary-green) !important; }
     
-    /* Resumo rápido */
     .summary-card {
       background: var(--bg-secondary);
       border-radius: 16px;
@@ -281,7 +335,6 @@ $categoryColors = [
       margin: 0;
     }
     
-    /* Card visual dos cartões (igual ao cards.php) */
     .card-visual {
       border-radius: 12px;
       padding: 16px;
@@ -320,7 +373,6 @@ $categoryColors = [
       position: relative;
     }
     
-    /* Gráfico de barras custom */
     .category-bar-container {
       margin-bottom: 20px;
     }
@@ -352,7 +404,6 @@ $categoryColors = [
       background: linear-gradient(90deg, var(--bar-color), var(--bar-color-light));
     }
     
-    /* Stats cards mini */
     .stat-mini-card {
       background: var(--bg-secondary);
       border-radius: 12px;
@@ -414,7 +465,6 @@ $categoryColors = [
       border: 1px solid #0a0;
     }
     
-    /* Transação item */
     .transaction-item {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
@@ -431,7 +481,6 @@ $categoryColors = [
       margin-bottom: 0;
     }
     
-    /* Tema escuro - ajustes */
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
@@ -464,6 +513,16 @@ $categoryColors = [
   </style>
 </head>
 <body>
+
+<!-- Background animado -->
+<div class="bg-animation">
+  <div class="floating-shape shape1"></div>
+  <div class="floating-shape shape2"></div>
+  <div class="floating-shape shape3"></div>
+  <div class="floating-shape shape4"></div>
+  <div class="floating-shape shape5"></div>
+</div>
+
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
     <a class="navbar-brand fw-bold" href="index.php">
@@ -496,7 +555,7 @@ $categoryColors = [
 </nav>
 
 <div class="container mt-4 pb-5">
-  <?php if (!empty($alerts) && ($settings['notifications'] ?? 1)): ?>
+  <?php if (!empty($alerts)): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       <strong><i class="bi bi-exclamation-triangle"></i> Alertas:</strong>
       <ul class="mb-0 mt-2">
@@ -509,7 +568,6 @@ $categoryColors = [
   <?php endif; ?>
 
   <div class="row g-4">
-    <!-- Coluna esquerda: Resumo -->
     <div class="col-12 col-lg-4">
       <div class="summary-card">
         <h5 class="mb-4"><i class="bi bi-graph-up"></i> Resumo Rápido</h5>
@@ -548,7 +606,6 @@ $categoryColors = [
         </div>
       </div>
 
-      <!-- Os teus cartões com visual atualizado -->
       <div class="card shadow-sm mt-3">
         <div class="card-body">
           <h6 class="card-title mb-3"><i class="bi bi-wallet2"></i> Os Teus Cartões</h6>
@@ -568,7 +625,6 @@ $categoryColors = [
               $cardColor = $c['color'] ?? 'purple';
               $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
             ?>
-              <!-- Card Visual -->
               <div class="card-visual <?=!$c['active'] ? 'card-visual-inactive' : ''?>" style="background: <?=$gradient?>;">
                 <div>
                   <div class="mb-2">
@@ -587,7 +643,6 @@ $categoryColors = [
                 </div>
               </div>
 
-              <!-- Informações do cartão -->
               <div class="mb-3">
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small">Utilização</span>
@@ -616,10 +671,8 @@ $categoryColors = [
       </div>
     </div>
 
-    <!-- Coluna direita: Análise e Transações -->
     <div class="col-12 col-lg-8">
       
-      <!-- Estatísticas Mini -->
       <?php if (!empty($categoryData) || $biggestExpense): ?>
       <div class="row g-3 mb-4">
         <?php if ($biggestExpense): ?>
@@ -658,7 +711,6 @@ $categoryColors = [
       </div>
       <?php endif; ?>
 
-      <!-- Gráfico de Gastos por Categoria -->
       <?php if (!empty($categoryData)): ?>
       <div class="card shadow-sm mb-4">
         <div class="card-body">
@@ -701,7 +753,6 @@ $categoryColors = [
       </div>
       <?php endif; ?>
 
-      <!-- Últimas Transações -->
       <div class="card shadow-sm">
         <div class="card-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
           <h5 class="mb-0"><i class="bi bi-receipt"></i> Últimas Transações</h5>
@@ -754,11 +805,10 @@ $categoryColors = [
           <?php endif; ?>
         </div>
       </div>
-      <!-- Card de Orçamentos -->
+
       <div class="row mt-3">
         <div class="col-12">
           <?php
-          // Contar orçamentos ativos
           $stmt = $pdo->prepare("SELECT COUNT(*) FROM budgets WHERE user_id = :uid AND active = 1");
           $stmt->execute([':uid' => $uid]);
           $activeBudgetsCount = $stmt->fetchColumn();
@@ -808,11 +858,26 @@ $categoryColors = [
         </div>
       </div>
     </div>
-    </div>
   </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// Gerar partículas (apenas desktop)
+(function() {
+  if (window.innerWidth <= 768) return;
+  const container = document.querySelector('.bg-animation');
+  if (!container) return;
+  for (let i = 0; i < 15; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+    container.appendChild(particle);
+  }
+})();
+
 // Animar barras de categoria
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
