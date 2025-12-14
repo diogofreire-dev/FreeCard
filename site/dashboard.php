@@ -539,6 +539,8 @@ $categoryColors = [
         <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
         <li class="nav-item"><a class="nav-link" href="analytics.php"><i class="bi bi-graph-up"></i> Análise</a></li>
         <li class="nav-item"><a class="nav-link" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
+        <li class="nav-item"><a class="nav-link" href="reminders.php"><i class="bi bi-calendar-check"></i> Lembretes</a>
+        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i> <?=htmlspecialchars($_SESSION['username'])?>
@@ -566,6 +568,64 @@ $categoryColors = [
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>
+  <?php
+    // Buscar lembretes vencidos e próximos
+    $stmt = $pdo->prepare("
+        SELECT r.*, c.name as card_name,
+              CASE 
+                  WHEN r.due_date < CURDATE() THEN 'overdue'
+                  WHEN r.due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'upcoming'
+                  ELSE 'future'
+              END as status,
+              DATEDIFF(r.due_date, CURDATE()) as days_until
+        FROM payment_reminders r
+        LEFT JOIN cards c ON c.id = r.card_id
+        WHERE r.user_id = :uid 
+        AND r.active = 1
+        AND r.due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+        ORDER BY r.due_date ASC
+        LIMIT 5
+    ");
+    $stmt->execute([':uid' => $uid]);
+    $upcomingReminders = $stmt->fetchAll();
+
+    $overdueReminders = array_filter($upcomingReminders, fn($r) => $r['status'] === 'overdue');
+    $soonReminders = array_filter($upcomingReminders, fn($r) => $r['status'] === 'upcoming');
+    ?>
+
+    <?php if (!empty($overdueReminders)): ?>
+      <div class="alert alert-danger alert-dismissible fade show">
+        <strong><i class="bi bi-exclamation-triangle"></i> Pagamentos Atrasados:</strong>
+        <ul class="mb-0 mt-2">
+          <?php foreach($overdueReminders as $r): ?>
+            <li>
+              <strong><?=htmlspecialchars($r['name'])?></strong> - 
+              €<?=number_format($r['amount'], 2)?> 
+              (<?=abs($r['days_until'])?> dia(s) atrasado)
+              <a href="reminders.php" class="alert-link">Ver detalhes</a>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
+
+    <?php if (!empty($soonReminders)): ?>
+      <div class="alert alert-warning alert-dismissible fade show">
+        <strong><i class="bi bi-clock-history"></i> Vencimentos Próximos:</strong>
+        <ul class="mb-0 mt-2">
+          <?php foreach($soonReminders as $r): ?>
+            <li>
+              <strong><?=htmlspecialchars($r['name'])?></strong> - 
+              €<?=number_format($r['amount'], 2)?> 
+              (vence em <?=$r['days_until']?> dia(s))
+              <a href="reminders.php" class="alert-link">Gerir</a>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
 
   <div class="row g-4">
     <div class="col-12 col-lg-4">
