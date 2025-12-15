@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   role ENUM('user','admin') NOT NULL DEFAULT 'user',
-  
   -- Campos de segurança (v1.1.0)
   last_password_change DATETIME NULL DEFAULT NULL COMMENT 'Data da última alteração de password',
   last_email_change DATETIME NULL DEFAULT NULL COMMENT 'Data da última alteração de email',
@@ -133,21 +132,16 @@ CREATE TABLE IF NOT EXISTS payment_reminders (
   amount DECIMAL(10,2) NOT NULL COMMENT 'Valor do pagamento',
   category VARCHAR(100) NULL COMMENT 'Categoria do pagamento',
   card_id INT UNSIGNED NULL COMMENT 'Cartão a ser usado (NULL = dinheiro)',
-  
   -- Datas e recorrência
   due_date DATE NOT NULL COMMENT 'Data de vencimento',
   recurrence ENUM('once', 'weekly', 'monthly', 'yearly') NOT NULL DEFAULT 'once' COMMENT 'Tipo de recorrência',
-  
   -- Estado
   active TINYINT(1) DEFAULT 1 COMMENT 'Lembrete ativo',
-
   -- Notificações
   notify_days_before INT DEFAULT 3 COMMENT 'Notificar X dias antes do vencimento',
-  
   -- Tracking
   last_paid_date DATE NULL COMMENT 'Última vez que foi marcado como pago',
   next_due_date DATE NULL COMMENT 'Próxima data calculada (para recorrentes)',
-  
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
