@@ -363,6 +363,14 @@
     .feature-card:nth-child(3) .feature-icon {
       background: linear-gradient(135deg, var(--light-green), var(--primary-green));
     }
+
+    .feature-card:nth-child(4) .feature-icon {
+      background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+    }
+
+    .feature-card:nth-child(5) .feature-icon {
+      background: linear-gradient(135deg, var(--dark-green), var(--primary-green));
+    }
     
     .feature-card h4 {
       font-size: 24px;
@@ -635,7 +643,7 @@
     <h2 class="section-title fade-in">Tudo o que precisas para gerir os teus cartões</h2>
     <p class="section-subtitle fade-in">Ferramentas poderosas para controlo total</p>
     <div class="row g-4">
-      <div class="col-md-4 fade-in">
+      <div class="col-lg-4 col-md-6 fade-in">
         <div class="feature-card">
           <div class="feature-icon">
             <i class="bi bi-credit-card-2-front"></i>
@@ -644,7 +652,7 @@
           <p>Adiciona e organiza todos os teus cartões de crédito num só lugar. Acompanha limites, saldos e mantém o controlo total com alertas inteligentes.</p>
         </div>
       </div>
-      <div class="col-md-4 fade-in">
+      <div class="col-lg-4 col-md-6 fade-in">
         <div class="feature-card">
           <div class="feature-icon">
             <i class="bi bi-receipt"></i>
@@ -653,13 +661,31 @@
           <p>Regista todas as tuas despesas com descrições detalhadas e categorias. Associa cada transação ao cartão correspondente e mantém histórico completo.</p>
         </div>
       </div>
-      <div class="col-md-4 fade-in">
+      <div class="col-lg-4 col-md-6 fade-in">
         <div class="feature-card">
           <div class="feature-icon">
             <i class="bi bi-graph-up"></i>
           </div>
           <h4>Análise de Gastos</h4>
           <p>Visualiza resumos mensais com gráficos interativos, recebe alertas quando te aproximas dos limites e analisa o histórico completo das tuas finanças.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 fade-in">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-piggy-bank"></i>
+          </div>
+          <h4>Definição de Orçamentos</h4>
+          <p>Define orçamentos para categorias ou cartões específicos. Acompanha os gastos em tempo real e recebe alertas quando te aproximas dos limites estabelecidos.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 fade-in">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <h4>Lembretes de Pagamento</h4>
+          <p>Cria lembretes para pagamentos recorrentes e despesas futuras. Recebe notificações antecipadas e mantém o controlo sobre todas as tuas obrigações financeiras.</p>
         </div>
       </div>
     </div>
