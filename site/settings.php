@@ -821,7 +821,7 @@ $currentTheme = $settings['theme'] ?? 'light';
             <div class="col-md-6 mb-3">
               <small class="text-muted">Autenticação 2FA</small>
               <div class="fw-semibold">
-                <?=$user['two_factor_enabled'] ? '✅ Ativada' : '❌ Desativada'?>
+                <?=$user['two_factor_enabled'] ? 'Ativada' : 'Desativada'?>
               </div>
             </div>
           </div>
