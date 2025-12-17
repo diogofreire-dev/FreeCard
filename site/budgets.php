@@ -205,16 +205,20 @@ $cards = $stmt->fetchAll();
       animation: float 20s infinite ease-in-out;
     }
     [data-theme="light"] .floating-shape {
-      background: rgba(46, 204, 113, 0.08);
+      background: rgba(46, 204, 113);
     }
     [data-theme="dark"] .floating-shape {
-      background: rgba(46, 204, 113, 0.05);
+      background: rgba(46, 204, 113);
     }
     .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
     .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
     .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
     .shape4 { width: 100px; height: 100px; bottom: 20%; left: 15%; animation-delay: 7s; }
     .shape5 { width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 3s; }
+    .shape6 { width: 250px; height: 300px; top: -100px; right: -100px; animation-delay: 6s; }
+    .shape7 { width: 180px; height: 180px; top: 10%; left: 70%; animation-delay: 1s; }
+    .shape8 { width: 120px; height: 120px; bottom: 10%; right: 30%; animation-delay: 4s; }
+    .shape9 { width: 220px; height: 220px; top: 60%; left: -80px; animation-delay: 8s; }
     @keyframes float {
       0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
       50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
@@ -226,8 +230,8 @@ $cards = $stmt->fetchAll();
       border-radius: 50%;
       animation: rise 15s infinite ease-in;
     }
-    [data-theme="light"] .particle { background: rgba(46, 204, 113, 0.4); }
-    [data-theme="dark"] .particle { background: rgba(46, 204, 113, 0.3); }
+    [data-theme="light"] .particle { background: rgba(46, 204, 113); }
+    [data-theme="dark"] .particle { background: rgba(46, 204, 113); }
     @keyframes rise {
       0% { transform: translateY(0) translateX(0); opacity: 0; }
       10% { opacity: 1; }
@@ -371,6 +375,10 @@ $cards = $stmt->fetchAll();
   <div class="floating-shape shape3"></div>
   <div class="floating-shape shape4"></div>
   <div class="floating-shape shape5"></div>
+  <div class="floating-shape shape6"></div>
+  <div class="floating-shape shape7"></div>
+  <div class="floating-shape shape8"></div>  
+  <div class="floating-shape shape9"></div>
 </div>
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
