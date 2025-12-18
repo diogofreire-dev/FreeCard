@@ -322,10 +322,82 @@ foreach ($transactions as $t) {
       color: var(--text-primary);
       border-color: var(--border-color);
     }
+    
+    /* ========== MOBILE RESPONSIVE FIXES ========== */
+    @media (max-width: 768px) {
+      /* Remover border-right e adicionar border-bottom em mobile */
+      .stat-item:not(:last-child) {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+      }
+      
+      .stat-item:last-child {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+      
+      /* Ajustar tamanho dos títulos em mobile */
+      .stat-item h3 {
+        font-size: 24px;
+      }
+      
+      .stat-item p {
+        font-size: 12px;
+      }
+      
+      /* Corrigir transações em mobile */
+      .transaction-item > .d-flex {
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      
+      .transaction-item .text-end {
+        text-align: left !important;
+        width: 100%;
+      }
+      
+      .transaction-item .text-end .d-flex.gap-2 {
+        flex-direction: row !important;
+        width: 100%;
+      }
+      
+      .transaction-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+      
+      .transaction-amount {
+        font-size: 20px;
+        margin-bottom: 8px;
+      }
+      
+      /* Ajustar botões em mobile */
+      .btn-delete {
+        font-size: 13px;
+        padding: 4px 8px;
+      }
+    }
+
+    /* Corrigir filtros em mobile */
+    @media (max-width: 768px) {
+      .filter-card .row {
+        margin-bottom: 0 !important;
+      }
+      
+      .filter-card .col-md-3 {
+        margin-bottom: 12px;
+      }
+      
+      .filter-card .col-md-3:last-child {
+        margin-bottom: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Background animado -->
 <div class="bg-animation">
   <div class="floating-shape shape1"></div>
   <div class="floating-shape shape2"></div>
@@ -392,19 +464,19 @@ foreach ($transactions as $t) {
   <?php if (!empty($transactions)): ?>
     <div class="summary-card mb-4">
       <div class="row">
-        <div class="col-4">
+        <div class="col-12 col-md-4">
           <div class="stat-item">
             <h3><?=count($transactions)?></h3>
             <p>Transações</p>
           </div>
         </div>
-        <div class="col-4">
+        <div class="col-12 col-md-4">
           <div class="stat-item">
             <h3 class="text-danger">€<?=number_format($total, 2)?></h3>
             <p>Total Gasto</p>
           </div>
         </div>
-        <div class="col-4">
+        <div class="col-12 col-md-4">
           <div class="stat-item">
             <h3 style="color: #3498db;">€<?=count($transactions) > 0 ? number_format($total / count($transactions), 2) : '0.00'?></h3>
             <p>Média</p>
@@ -534,7 +606,7 @@ foreach ($transactions as $t) {
 
           <?php foreach($dayTransactions as $t): ?>
             <div class="transaction-item">
-              <div class="d-flex align-items-center gap-3">
+              <div class="d-flex align-items-start gap-3">
                 <div class="transaction-icon">
                   <i class="bi bi-<?=
                     match($t['category']) {
@@ -570,11 +642,11 @@ foreach ($transactions as $t) {
                     </small>
                   </div>
                 </div>
-                <div class="text-end d-flex flex-column align-items-end gap-2">
+                <div class="text-end">
                   <div class="transaction-amount">
                     -€<?=number_format($t['amount'], 2)?>
                   </div>
-                  <div class="d-flex gap-2">
+                  <div class="d-flex gap-2 mt-2">
                     <a href="edit_transaction.php?id=<?=$t['id']?>" class="btn btn-sm btn-outline-primary btn-delete">
                       <i class="bi bi-pencil"></i> Editar
                     </a>

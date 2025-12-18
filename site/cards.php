@@ -21,18 +21,6 @@ $cardColors = [
     'indigo' => 'linear-gradient(135deg, #3F51B5 0%, #3F51B5 100%)'
 ];
 
-// Mapeamento de logos de bancos
-$bankLogos = [
-    'cgd' => 'https://www.cgd.pt/Institucional/Marca-CGD/PublishingImages/Logotipo/RGB_H_Logo-CGD-2021.png',
-    'millennium' => 'https://www.millenniumbcp.pt/img/logo_millennium_bcp.svg',
-    'santander' => 'https://www.santander.pt/sites/all/themes/santander_theme/images/logo.png',
-    'novobanco' => 'https://www.novobanco.pt/site/cms.aspx?plg=b4e3fa9b-5bfe-4aaf-b8df-fdb6e9d7e0cf',
-    'activobank' => 'https://www.activobank.pt/pt/img/logo.svg',
-    'montepio' => 'https://www.montepio.org/SiteCollectionImages/logo-montepio.png',
-    'bankinter' => 'https://www.bankinter.pt/img/logo-bankinter.svg',
-    'moey' => 'https://moey.pt/assets/img/logo.svg'
-];
-
 // Ação: ativar/desativar
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST['action'] === 'toggle') {
     $cardId = intval($_POST['card_id'] ?? 0);
@@ -253,17 +241,6 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       position: relative;
     }
     
-    /* Logo do banco no cartão */
-    .bank-logo-card {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-      background: white;
-      border-radius: 8px;
-      padding: 4px;
-      position: relative;
-    }
-    
     .summary-card {
       background: var(--bg-secondary);
       border-radius: 16px;
@@ -331,10 +308,66 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
     [data-theme="dark"] .progress {
       background: var(--bg-hover);
     }
+    
+    /* ========== MOBILE RESPONSIVE FIXES ========== */
+    @media (max-width: 768px) {
+      /* Remover border-right e adicionar border-bottom em mobile */
+      .stat-item:not(:last-child) {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+      }
+      
+      .stat-item:last-child {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+      
+      /* Ajustar tamanho dos títulos em mobile */
+      .stat-item h3 {
+        font-size: 24px;
+      }
+      
+      .stat-item p {
+        font-size: 12px;
+      }
+      
+      /* Corrigir card de cartão em mobile */
+      .card-body .bg-light .row .col-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+      
+      .card-body .bg-light .row .col-6:first-child {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+      }
+    }
+
+    /* Corrigir botões de ação em mobile */
+    @media (max-width: 576px) {
+      .d-flex.gap-2.mb-2 {
+        flex-direction: column !important;
+      }
+      
+      .d-flex.gap-2.mb-2 > * {
+        width: 100% !important;
+      }
+      
+      .d-flex.gap-2.mb-2 form {
+        width: 100% !important;
+      }
+      
+      .d-flex.gap-2.mb-2 .btn {
+        width: 100% !important;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Background animado -->
 <div class="bg-animation">
   <div class="floating-shape shape1"></div>
   <div class="floating-shape shape2"></div>
@@ -406,19 +439,19 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
           <h3><i class="text-success"></i> Cartões Ativos</h3>
         </div>
         <div class="row">
-          <div class="col-4">
+          <div class="col-12 col-md-4">
             <div class="stat-item">
               <h3 style="color: #3498db;">€<?=number_format($activeTotalLimit, 2)?></h3>
               <p>Limite Total</p>
             </div>
           </div>
-          <div class="col-4">
+          <div class="col-12 col-md-4">
             <div class="stat-item">
               <h3 class="text-danger">€<?=number_format($activeTotalBalance, 2)?></h3>
               <p>Gasto Atual</p>
             </div>
           </div>
-          <div class="col-4">
+          <div class="col-12 col-md-4">
             <div class="stat-item">
               <h3 class="text-success">€<?=number_format($activeAvailable, 2)?></h3>
               <p>Disponível</p>
@@ -436,8 +469,6 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
             $available = $c['limit_amount'] - $c['balance'];
             $cardColor = $c['color'] ?? 'purple';
             $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
-            $bank = $c['bank'] ?? 'none';
-            $hasBank = $bank !== 'none' && isset($bankLogos[$bank]);
           ?>
           <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100">
@@ -446,11 +477,7 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
                 <div class="card-visual mb-3" style="background: <?=$gradient?>;">
                   <div>
                     <div class="mb-2">
-                      <?php if ($hasBank): ?>
-                        <img src="<?=$bankLogos[$bank]?>" alt="<?=$bank?>" class="bank-logo-card">
-                      <?php else: ?>
-                        <i class="bi bi-credit-card" style="font-size: 28px;"></i>
-                      <?php endif; ?>
+                      <i class="bi bi-credit-card" style="font-size: 28px;"></i>
                     </div>
                     <div class="card-number">•••• •••• •••• ••••</div>
                   </div>
@@ -525,19 +552,19 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
           <h3><i class="text-secondary"></i> Cartões Inativos</h3>
         </div>
         <div class="row">
-          <div class="col-4">
+          <div class="col-12 col-md-4">
             <div class="stat-item">
               <h3 style="color: #3498db;">€<?=number_format($inactiveTotalLimit, 2)?></h3>
               <p>Limite Total</p>
             </div>
           </div>
-          <div class="col-4">
+          <div class="col-12 col-md-4">
             <div class="stat-item">
               <h3 class="text-danger">€<?=number_format($inactiveTotalBalance, 2)?></h3>
               <p>Gasto Atual</p>
             </div>
           </div>
-          <div class="col-4">
+          <div class="col-12 col-md-4">
             <div class="stat-item">
               <h3 class="text-success">€<?=number_format($inactiveAvailable, 2)?></h3>
               <p>Disponível</p>
@@ -555,8 +582,6 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
             $available = $c['limit_amount'] - $c['balance'];
             $cardColor = $c['color'] ?? 'purple';
             $gradient = $cardColors[$cardColor] ?? $cardColors['purple'];
-            $bank = $c['bank'] ?? 'none';
-            $hasBank = $bank !== 'none' && isset($bankLogos[$bank]);
           ?>
           <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100">
@@ -565,11 +590,7 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
                 <div class="card-visual card-visual-inactive mb-3" style="background: <?=$gradient?>;">
                   <div>
                     <div class="mb-2">
-                      <?php if ($hasBank): ?>
-                        <img src="<?=$bankLogos[$bank]?>" alt="<?=$bank?>" class="bank-logo-card">
-                      <?php else: ?>
-                        <i class="bi bi-credit-card" style="font-size: 28px;"></i>
-                      <?php endif; ?>
+                      <i class="bi bi-credit-card" style="font-size: 28px;"></i>
                     </div>
                     <div class="card-number">•••• •••• •••• ••••</div>
                   </div>
