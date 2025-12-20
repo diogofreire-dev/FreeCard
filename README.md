@@ -114,8 +114,7 @@ FreeCard/
 │   │   ├── logo.png
 │   │   └── logo2.png
 │   ├── css/
-│   │   ├── theme.css       # Sistema de temas claro/escuro
-│   │   └── global-theme.css
+│   │   └── theme.css       # Sistema de temas claro/escuro
 │   ├── index.php           # Homepage
 │   ├── auth.php            # Middleware de autenticação
 │   ├── theme_helper.php    # Helper para gestão de temas
@@ -305,7 +304,7 @@ Contribuições são bem-vindas! Sente-te à vontade para:
 
 ## Changelog
 
-### Versão 1.0.0 (Janeiro 2025)
+### Versão 1.1.2 (Dezembro 2024)
 - Sistema completo de autenticação
 - Gestão de cartões com 8 cores personalizáveis
 - Gestão de transações com 8 categorias
@@ -327,7 +326,7 @@ Este projeto está sob a licença MIT - vê o ficheiro [LICENSE](LICENSE) para m
 - GitHub: [@diogofreire-dev](https://github.com/diogofreire-dev)
 
 **Jandro Antunes** - Colaborador
-- Projeto de Aptidão Profissional
+- GitHub: [@Jandtoantunes](https://github.com/Jandroantunes)
 
 ## Suporte
 
