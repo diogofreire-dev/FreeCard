@@ -313,7 +313,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .info-box {
       background: var(--bg-primary);
-      border-left: 4px solid #3498db;
       padding: 16px;
       border-radius: 8px;
     }
