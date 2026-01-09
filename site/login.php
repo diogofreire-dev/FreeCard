@@ -217,15 +217,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       animation: logoFloat 3s infinite ease-in-out;
     }
     
-    @keyframes logoFloat {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-    }
-    
     .logo-container img {
       width: 120px;
       height: auto;
