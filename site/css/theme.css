@@ -319,3 +319,22 @@
   position: relative;
   z-index: auto !important;
 }
+
+/* Versão simples - apenas separadores verticais */
+.navbar-nav .nav-item:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+  padding-right: 0.30rem;
+  margin-right: 0.30rem;
+}
+
+/* Remover em mobile */
+@media (max-width: 991px) {
+  .navbar-nav .nav-item:not(:last-child) {
+    border-right: none;
+  }
+}
+
+/* Tema escuro */
+[data-theme="dark"] .navbar-nav .nav-item:not(:last-child) {
+  border-color: rgba(255, 255, 255, 0.15);
+}
