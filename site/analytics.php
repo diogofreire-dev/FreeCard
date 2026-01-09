@@ -448,7 +448,7 @@ $months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out',
 </div>
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="index.php">
+    <a class="navbar-brand fw-bold" href="dashboard.php">
       <img src="assets/logo2.png" alt="Freecard">
       FreeCard
     </a>

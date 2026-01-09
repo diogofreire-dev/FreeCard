@@ -455,7 +455,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
 
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="index.php">
+    <a class="navbar-brand fw-bold" href="dashboard.php">
       <img src="assets/logo2.png" alt="Freecard"> FreeCard
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
