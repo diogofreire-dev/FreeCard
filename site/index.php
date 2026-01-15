@@ -8,11 +8,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     :root {
-      --primary-green: #2ecc71;
-      --dark-green: #27ae60;
-      --light-green: #a8e6cf;
-      --darker-green: #1e8449;
-      --very-light-green: #d5f4e6;
+      --primary-green: #3498db;
+      --dark-green: #2980b9;
+      --light-green: #a8d0e6;
+      --darker-green: #1f4e79;
+      --very-light-green: #d5e6f4;
     }
     
     * {
@@ -40,7 +40,7 @@
     
     .navbar.scrolled {
       padding: 15px 0;
-      box-shadow: 0 5px 30px rgba(46, 204, 113, 0.15);
+      box-shadow: 0 5px 30px rgba(46, 88, 204, 0.15);
     }
     
     .navbar-brand {
@@ -332,7 +332,7 @@
     
     .feature-card:hover {
       transform: translateY(-15px);
-      box-shadow: 0 30px 60px rgba(46, 204, 113, 0.15);
+      box-shadow: 0 30px 60px rgba(46, 88, 204, 0.15);
       border-color: var(--light-green);
     }
     
@@ -348,12 +348,12 @@
       color: white;
       font-size: 36px;
       transition: all 0.4s;
-      box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
+      box-shadow: 0 10px 30px rgba(46, 88, 204, 0.15);
     }
     
     .feature-card:hover .feature-icon {
       transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 15px 40px rgba(46, 204, 113, 0.5);
+      box-shadow: 0 15px 40px rgba(46, 88, 204, 0.5);
     }
     
     .feature-card:nth-child(2) .feature-icon {
@@ -400,7 +400,7 @@
       position: absolute;
       width: 400px;
       height: 400px;
-      background: rgba(46, 204, 113, 0.05);
+      background: rgba(46, 146, 204, 0.05);
       border-radius: 50%;
       top: -200px;
       right: -100px;
@@ -591,7 +591,7 @@
           <a class="nav-link" href="login.php">Entrar</a>
         </li>
         <li class="nav-item">
-          <a class="btn btn-success" href="register.php" style="border-radius: 50px; padding: 10px 30px;">Começar agora</a>
+          <a class="btn btn-primary" href="register.php" style="border-radius: 50px; padding: 10px 30px;">Começar agora</a>
         </li>
       </ul>
     </div>

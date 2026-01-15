@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     :root {
-      --primary-green: #2ecc71;
-      --dark-green: #27ae60;
+      --primary-blue: #3498db;
+      --dark-blue: #2980b9;
       --light-bg: #f8f9fa;
     }
     
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .floating-shape {
       position: absolute;
       border-radius: 50%;
-      background: rgba(46, 204, 113, 0.1);
+      background: rgba(52, 152, 219, 0.1);
       animation: float 20s infinite ease-in-out;
     }
     
@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       position: absolute;
       width: 4px;
       height: 4px;
-      background: rgba(46, 204, 113, 0.4);
+      background: rgba(52, 152, 219, 0.4);
       border-radius: 50%;
       animation: rise 15s infinite ease-in;
     }
@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle, rgba(46, 204, 113, 0.05) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(52, 152, 219, 0.05) 0%, transparent 70%);
       animation: pulse 4s infinite ease-in-out;
     }
     
@@ -235,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .logo-container img {
       width: 120px;
       height: auto;
-      filter: drop-shadow(0 4px 8px rgba(46, 204, 113, 0.2));
+      filter: drop-shadow(0 4px 8px rgba(52, 152, 219, 0.2));
     }
     
     .register-header h1 {
@@ -302,13 +302,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     .form-control:focus {
-      border-color: var(--primary-green);
-      box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
       transform: translateY(-2px);
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
       border: none;
       border-radius: 12px;
       padding: 14px;
@@ -337,7 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .btn-primary:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+      box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
     }
     
     .btn-primary:active {
@@ -370,13 +370,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     .login-link a {
-      color: var(--primary-green);
+      color: var(--primary-blue);
       font-weight: 600;
       text-decoration: none;
       position: relative;
       transition: color 0.3s;
     }
-    
+
     .login-link a::after {
       content: '';
       position: absolute;
@@ -384,12 +384,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       left: 0;
       width: 0;
       height: 2px;
-      background: var(--primary-green);
+      background: var(--primary-blue);
       transition: width 0.3s;
     }
-    
+
     .login-link a:hover {
-      color: var(--dark-green);
+      color: var(--dark-blue);
     }
     
     .login-link a:hover::after {
@@ -401,7 +401,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border: 2px solid #e9ecef;
       border-right: none;
       border-radius: 12px 0 0 12px;
-      color: var(--primary-green);
+      color: var(--primary-blue);
       transition: all 0.3s;
     }
     
@@ -411,8 +411,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     .input-group:focus-within .input-group-text {
-      border-color: var(--primary-green);
-      background: rgba(46, 204, 113, 0.1);
+      border-color: var(--primary-blue);
+      background: rgba(52, 152, 219, 0.1);
       transform: translateX(3px);
     }
     
@@ -459,9 +459,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: linear-gradient(90deg, #f39c12, #e67e22);
     }
     
-    .strength-strong { 
-      width: 100%; 
-      background: linear-gradient(90deg, var(--primary-green), var(--dark-green));
+    .strength-strong {
+      width: 100%;
+      background: linear-gradient(90deg, var(--primary-blue), var(--dark-blue));
     }
     
     .password-hint {
