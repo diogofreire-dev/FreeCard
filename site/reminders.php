@@ -331,7 +331,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     [data-theme="light"] body::before {
       content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e8f5e9 100%);
+      background: linear-gradient(135deg, #e8eef5ff 0%, #e9eef8ff 50%, #e8edf5ff 100%);
       z-index: -1;
     }
     [data-theme="dark"] body::before {
@@ -343,8 +343,8 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
       position: absolute; border-radius: 50%;
       animation: float 20s infinite ease-in-out;
     }
-    [data-theme="light"] .floating-shape { background: rgba(46, 204, 113); }
-    [data-theme="dark"] .floating-shape { background: rgba(46, 204, 113); }
+    [data-theme="light"] .floating-shape { background: rgba(46, 88, 204); }
+    [data-theme="dark"] .floating-shape { background: rgba(46, 88, 204); }
     .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
     .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
     .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
@@ -360,15 +360,15 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     .navbar, .container { position: relative; z-index: 1; }
     
-    :root { --primary-green: #2ecc71; --dark-green: #27ae60; }
+    :root { --primary-blue: #3498db; --dark-blue: #2980b9; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-primary); color: var(--text-primary);
     }
     .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: var(--navbar-bg); }
     .navbar-brand img { height: 35px; margin-right: 8px; }
-    .btn-primary { background: var(--primary-green); border-color: var(--primary-green); }
-    .btn-primary:hover { background: var(--dark-green); border-color: var(--dark-green); }
+    .btn-primary { background: var(--primary-blue); border-color: var(--primary-blue); }
+    .btn-primary:hover { background: var(--dark-blue); border-color: var(--dark-blue); }
     
     .card {
       border: none; border-radius: 16px; box-shadow: 0 4px 20px var(--shadow);
@@ -429,7 +429,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     .form-control:focus, .form-select:focus {
       background: var(--bg-primary); color: var(--text-primary);
-      border-color: var(--primary-green);
+      border-color: var(--primary-blue);
     }
     
     [data-theme="dark"] .form-control::placeholder {
