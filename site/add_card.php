@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e8f5e9 100%);
+      background: linear-gradient(135deg, #e8eef5ff 0%, #e9eef8ff 50%, #e8edf5ff 100%);
       z-index: -1;
     }
     [data-theme="dark"] body::before {
@@ -119,10 +119,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       animation: float 20s infinite ease-in-out;
     }
     [data-theme="light"] .floating-shape {
-      background: rgba(46, 204, 113);
+      background: rgba(46, 88, 204);
     }
     [data-theme="dark"] .floating-shape {
-      background: rgba(46, 204, 113);
+      background: rgba(46, 88, 204);
     }
     .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
     .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
@@ -144,8 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-radius: 50%;
       animation: rise 15s infinite ease-in;
     }
-    [data-theme="light"] .particle { background: rgba(46, 204, 113); }
-    [data-theme="dark"] .particle { background: rgba(46, 204, 113); }
+    [data-theme="light"] .particle { background: rgba(46, 88, 204); }
+    [data-theme="dark"] .particle { background: rgba(46, 88, 204); }
     @keyframes rise {
       0% { transform: translateY(0) translateX(0); opacity: 0; }
       10% { opacity: 1; }
@@ -161,8 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       .floating-shape, .particle { animation: none; opacity: 0.2; }
     }
     :root {
-      --primary-green: #2ecc71;
-      --dark-green: #27ae60;
+      --primary-blue: #3498db;
+      --dark-blue: #2980b9;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -174,23 +174,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: var(--navbar-bg);
     }
     .navbar-brand img { height: 35px; margin-right: 8px; }
-    .btn-primary { 
-      background: var(--primary-green); 
-      border-color: var(--primary-green); 
+    .btn-primary {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
     }
-    .btn-primary:hover { 
-      background: var(--dark-green); 
-      border-color: var(--dark-green); 
+    .btn-primary:hover {
+      background: var(--dark-blue);
+      border-color: var(--dark-blue);
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
     }
-    .btn-outline-primary { 
-      color: var(--primary-green); 
-      border-color: var(--primary-green); 
+    .btn-outline-primary {
+      color: var(--primary-blue);
+      border-color: var(--primary-blue);
     }
-    .btn-outline-primary:hover { 
-      background: var(--primary-green); 
-      border-color: var(--primary-green); 
+    .btn-outline-primary:hover {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
     }
     .card {
       border: none;
@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--text-primary);
     }
     .card-header {
-      background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+      background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
       border-radius: 16px 16px 0 0 !important;
       padding: 24px;
     }
@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: var(--bg-hover);
     }
     .progress-bar-custom {
-      background: var(--primary-green);
+      background: var(--primary-blue);
       border-radius: 10px;
     }
     
