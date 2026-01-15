@@ -222,7 +222,7 @@ $categoryColors = [
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e8f5e9 100%);
+      background: linear-gradient(135deg, #e8eef5ff 0%, #e9eef8ff 50%, #e8edf5ff 100%);
       z-index: -1;
     }
     [data-theme="dark"] body::before {
@@ -241,10 +241,10 @@ $categoryColors = [
       animation: float 20s infinite ease-in-out;
     }
     [data-theme="light"] .floating-shape {
-      background: rgba(46, 204, 113);
+      background: rgba(46, 88, 204);
     }
     [data-theme="dark"] .floating-shape {
-      background: rgba(46, 204, 113);
+      background: rgba(46, 88, 204);
     }
     .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
     .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
@@ -266,8 +266,8 @@ $categoryColors = [
       border-radius: 50%;
       animation: rise 15s infinite ease-in;
     }
-    [data-theme="light"] .particle { background: rgba(46, 204, 113); }
-    [data-theme="dark"] .particle { background: rgba(46, 204, 113); }
+    [data-theme="light"] .particle { background: rgba(46, 88, 204); }
+    [data-theme="dark"] .particle { background: rgba(46, 88, 204); }
     @keyframes rise {
       0% { transform: translateY(0) translateX(0); opacity: 0; }
       10% { opacity: 1; }
@@ -285,8 +285,8 @@ $categoryColors = [
     /* ========== FIM BACKGROUND ========== */
 
     :root {
-      --primary-green: #2ecc71;
-      --dark-green: #27ae60;
+      --primary-blue: #3498db;
+      --dark-blue: #2980b9;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -305,24 +305,24 @@ $categoryColors = [
       background: var(--navbar-bg);
     }
     .navbar-brand img { height: 35px; margin-right: 8px; }
-    .btn-primary { 
-      background: var(--primary-green); 
-      border-color: var(--primary-green); 
+    .btn-primary {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
     }
-    .btn-primary:hover { 
-      background: var(--dark-green); 
-      border-color: var(--dark-green); 
+    .btn-primary:hover {
+      background: var(--dark-blue);
+      border-color: var(--dark-blue);
     }
-    .btn-outline-primary { 
-      color: var(--primary-green); 
-      border-color: var(--primary-green); 
+    .btn-outline-primary {
+      color: var(--primary-blue);
+      border-color: var(--primary-blue);
     }
-    .btn-outline-primary:hover { 
-      background: var(--primary-green); 
-      border-color: var(--primary-green); 
+    .btn-outline-primary:hover {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
       color: white;
     }
-    .text-primary { color: var(--primary-green) !important; }
+    .text-primary { color: var(--primary-blue) !important; }
     
     .summary-card {
       background: var(--bg-secondary);
@@ -336,7 +336,7 @@ $categoryColors = [
     .summary-stat-value {
       font-size: 32px;
       font-weight: 800;
-      color: var(--primary-green);
+      color: var(--primary-blue);
       margin-bottom: 4px;
     }
     .summary-stat-label {
@@ -485,7 +485,7 @@ $categoryColors = [
     }
     .transaction-item:hover {
       background: var(--bg-hover);
-      border-color: var(--primary-green);
+      border-color: var(--primary-blue);
     }
     .transaction-item:last-child {
       margin-bottom: 0;
@@ -774,10 +774,10 @@ $categoryColors = [
             <div class="d-flex justify-content-between align-items-start">
               <div class="flex-grow-1">
                 <div class="stat-label">Categoria Top</div>
-                <div class="stat-value" style="color: var(--primary-green);"><?=htmlspecialchars($categoryData[0]['category'])?></div>
+                <div class="stat-value" style="color: var(--primary-blue);"><?=htmlspecialchars($categoryData[0]['category'])?></div>
                 <div class="stat-description">€<?=number_format($categoryData[0]['total'],2)?> em <?=$categoryData[0]['count']?> transações</div>
               </div>
-              <div class="stat-icon" style="background:  var(--bg-primary); color: var(--primary-green);">
+              <div class="stat-icon" style="background:  var(--bg-primary); color: var(--primary-blue);">
                 <i class="bi bi-star-fill"></i>
               </div>
             </div>
@@ -895,7 +895,7 @@ $categoryColors = [
               <div class="card-body py-3 px-4">
                 <div class="d-flex align-items-center justify-content-between">
                   <div class="d-flex align-items-center gap-3">
-                    <i class="bi bi-piggy-bank" style="font-size: 24px; color: var(--primary-green);"></i>
+                    <i class="bi bi-piggy-bank" style="font-size: 24px; color: var(--primary-blue);"></i>
                     <div>
                       <small class="text-muted d-block" style="font-size: 12px;">Orçamentos Ativos</small>
                       <strong>
