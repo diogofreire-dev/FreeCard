@@ -602,7 +602,7 @@
   <div class="container">
     <div class="row align-items-center">
       <div class="col-lg-6 hero-content">
-        <h1>Controla as tuas <span>finanças</span> com simplicidade</h1>
+        <h1>Controla os teus <span>cartões</span> com simplicidade</h1>
         <p>Gere os teus cartões e transações de forma inteligente. Acompanha os teus gastos e mantém-te sempre dentro do orçamento.</p>
         <div class="hero-buttons">
           <a href="register.php" class="btn-hero">
