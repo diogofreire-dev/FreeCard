@@ -341,11 +341,11 @@
   z-index: auto !important;
 }
 
-/* Versão simples - apenas separadores verticais */
+/* Separadores verticais */
 .navbar-nav .nav-item:not(:last-child) {
   border-right: 1px solid var(--border-color);
-  padding-right: 0.30rem;
-  margin-right: 0.30rem;
+  padding-right: 0.10rem;
+  margin-right: 0.10rem;
 }
 
 /* Remover em mobile */

@@ -374,6 +374,7 @@ if (!empty($transactions)) {
 }
 
 // ===== RODAPÉ =====
+$pdf->SetAutoPageBreak(false);
 $totalPages = $pdf->getNumPages();
 for ($i = 1; $i <= $totalPages; $i++) {
     $pdf->setPage($i);
