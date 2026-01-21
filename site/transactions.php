@@ -447,9 +447,14 @@ foreach ($transactions as $t) {
       <h2><i class="bi bi-receipt"></i> As Minhas Transações</h2>
       <p class="text-muted mb-0">Histórico completo de despesas</p>
     </div>
-    <a href="create_transaction.php" class="btn btn-primary">
-      <i class="bi bi-plus-circle"></i> Nova Transação
-    </a>
+    <div class="d-flex gap-2">
+      <a href="export_pdf.php" class="btn btn-danger">
+        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+      </a>
+      <a href="create_transaction.php" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nova Transação
+      </a>
+    </div>
   </div>
 
   <?php if ($message): ?>

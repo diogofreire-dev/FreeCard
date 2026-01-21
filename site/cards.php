@@ -417,9 +417,14 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       <h2><i class="bi bi-wallet2"></i> Os Meus Cartões</h2>
       <p class="text-muted mb-0">Gere os teus cartões e acompanha os limites</p>
     </div>
-    <a href="add_card.php" class="btn btn-primary">
-      <i class="bi bi-plus-circle"></i> Adicionar Cartão
-    </a>
+    <div class="d-flex gap-2">
+      <a href="export_pdf.php" class="btn btn-danger">
+        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+      </a>
+      <a href="add_card.php" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Adicionar Cartão
+      </a>
+    </div>
   </div>
 
   <?php if ($message): ?>
