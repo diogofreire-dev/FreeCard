@@ -168,6 +168,34 @@ $categories = ['Compras', 'Alimentação', 'Transporte', 'Saúde', 'Entretenimen
     font-size: 64px;
     margin-bottom: 20px;
   }
+
+  /* Tema escuro */
+  [data-theme="dark"] .text-muted {
+    color: var(--text-secondary) !important;
+  }
+  [data-theme="dark"] .form-control,
+  [data-theme="dark"] .form-select {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+  [data-theme="dark"] .form-control:focus,
+  [data-theme="dark"] .form-select:focus {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--primary-blue);
+  }
+  [data-theme="dark"] .form-check-label {
+    color: var(--text-primary);
+  }
+  [data-theme="dark"] .alert-info {
+    background: rgba(52, 152, 219, 0.2);
+    border-color: rgba(52, 152, 219, 0.3);
+    color: var(--text-primary);
+  }
+  [data-theme="dark"] .form-label {
+    color: var(--text-primary);
+  }
 </style>
 </head>
 <body>
