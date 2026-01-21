@@ -287,6 +287,7 @@ $categories = ['Compras', 'Alimentação', 'Transporte', 'Saúde', 'Entretenimen
           <i class="bi bi-file-earmark-text export-icon text-primary"></i>
           <h4 class="fw-bold mb-3">Relatório Completo</h4>
           <p class="text-muted mb-4">Todas as transações com análise detalhada</p>
+          <!-- Botão de exportação completa -->
           <button type="button" class="btn btn-primary px-4" onclick="exportReport('full')">
             <i class="bi bi-download"></i> Exportar Completo
           </button>
@@ -299,6 +300,7 @@ $categories = ['Compras', 'Alimentação', 'Transporte', 'Saúde', 'Entretenimen
           <i class="bi bi-file-earmark-bar-graph export-icon text-success"></i>
           <h4 class="fw-bold mb-3">Relatório Resumido</h4>
           <p class="text-muted mb-4">Últimas 20 transações e resumo</p>
+          <!-- Botão de exportação resumida -->
           <button type="button" class="btn btn-outline-primary px-4" onclick="exportReport('summary')">
             <i class="bi bi-download"></i> Exportar Resumido
           </button>
