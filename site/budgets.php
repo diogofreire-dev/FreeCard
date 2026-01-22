@@ -365,6 +365,38 @@ $cards = $stmt->fetchAll();
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
+
+    /* Header da página responsivo */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .page-header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-header-buttons {
+        width: 100%;
+      }
+
+      .page-header-buttons .btn {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -413,14 +445,16 @@ $cards = $stmt->fetchAll();
 </nav>
 
 <div class="container mt-4 mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header">
     <div>
       <h2><i class="bi bi-piggy-bank"></i> Os Meus Orçamentos</h2>
       <p class="text-muted mb-0">Controla os teus gastos mensais e mantém-te no orçamento</p>
     </div>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newBudgetModal">
-      <i class="bi bi-plus-circle"></i> Novo Orçamento
-    </button>
+    <div class="page-header-buttons">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newBudgetModal">
+        <i class="bi bi-plus-circle"></i> Novo Orçamento
+      </button>
+    </div>
   </div>
 
   <?php if ($message): ?>
