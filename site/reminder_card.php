@@ -67,30 +67,32 @@
     </div>
   </div>
   
-  <div class="d-flex gap-2 justify-content-end flex-wrap">
-    <?php if ($r['active'] && ($r['status'] === 'overdue' || $r['status'] === 'upcoming')): ?>
-      <button type="button" class="btn btn-sm btn-success" onclick="openMarkPaidModal(<?=$r['id']?>)">
-        <i class="bi bi-check-circle"></i> Marcar como Pago
+  <div class="d-flex gap-2 justify-content-between flex-wrap">
+    <div class="d-flex gap-2 flex-wrap reminder-actions">
+      <?php if ($r['active'] && ($r['status'] === 'overdue' || $r['status'] === 'upcoming')): ?>
+        <button type="button" class="btn btn-sm btn-success" onclick="openMarkPaidModal(<?=$r['id']?>)">
+          <i class="bi bi-check-circle"></i> Marcar como Pago
+        </button>
+      <?php endif; ?>
+
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditModal(<?=htmlspecialchars(json_encode($r))?>)">
+        <i class="bi bi-pencil"></i> Editar
       </button>
-    <?php endif; ?>
-    
-    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditModal(<?=htmlspecialchars(json_encode($r))?>)">
-      <i class="bi bi-pencil"></i> Editar
-    </button>
-    
-    <form method="post" class="d-inline">
-      <input type="hidden" name="action" value="toggle">
-      <input type="hidden" name="reminder_id" value="<?=$r['id']?>">
-      <button type="submit" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-<?=$r['active'] ? 'pause' : 'play'?>-circle"></i>
-        <?=$r['active'] ? 'Desativar' : 'Ativar'?>
-      </button>
-    </form>
-    
+
+      <form method="post" class="d-inline">
+        <input type="hidden" name="action" value="toggle">
+        <input type="hidden" name="reminder_id" value="<?=$r['id']?>">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-<?=$r['active'] ? 'pause' : 'play'?>-circle"></i>
+          <?=$r['active'] ? 'Desativar' : 'Ativar'?>
+        </button>
+      </form>
+    </div>
+
     <form method="post" class="d-inline" onsubmit="return confirm('Tens a certeza? O histórico será mantido.');">
       <input type="hidden" name="action" value="delete">
       <input type="hidden" name="reminder_id" value="<?=$r['id']?>">
-      <button type="submit" class="btn btn-sm btn-outline-danger">
+      <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
         <i class="bi bi-trash"></i>
       </button>
     </form>
