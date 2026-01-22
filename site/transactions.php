@@ -386,13 +386,45 @@ foreach ($transactions as $t) {
       .filter-card .row {
         margin-bottom: 0 !important;
       }
-      
+
       .filter-card .col-md-3 {
         margin-bottom: 12px;
       }
-      
+
       .filter-card .col-md-3:last-child {
         margin-bottom: 0;
+      }
+    }
+
+    /* Header da página responsivo */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .page-header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-header-buttons {
+        width: 100%;
+      }
+
+      .page-header-buttons .btn {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
       }
     }
   </style>
@@ -442,12 +474,12 @@ foreach ($transactions as $t) {
 </nav>
 
 <div class="container mt-4 mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header">
     <div>
       <h2><i class="bi bi-receipt"></i> As Minhas Transações</h2>
       <p class="text-muted mb-0">Histórico completo de despesas</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="page-header-buttons">
       <a href="export_pdf.php" class="btn btn-danger">
         <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
       </a>
