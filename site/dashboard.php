@@ -38,12 +38,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([':uid' => $uid]);
 $totalLastMonth = $stmt->fetchColumn();
 
-// Calcular tendência
-$tendency = 0;
-if ($totalLastMonth > 0) {
-    $tendency = (($totalMonth - $totalLastMonth) / $totalLastMonth) * 100;
-}
-
 // Transacções últimos 30 dias
 $stmt = $pdo->prepare("
     SELECT COUNT(*) 
@@ -455,26 +449,6 @@ $categoryColors = [
       margin: 0;
     }
     
-    .tendency-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border-radius: 300px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .tendency-up {
-      background:  var(--bg-primary);
-      color: #e74c3c;
-      border: 1px solid #e74c3c;
-    }
-    .tendency-down {
-      background:  var(--bg-primary);
-      color: #0a0;
-      border: 1px solid #0a0;
-    }
-    
     .transaction-item {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
@@ -651,12 +625,6 @@ $categoryColors = [
         <div class="summary-stat">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="summary-stat-label">Gasto este mês</span>
-            <?php if ($tendency != 0): ?>
-              <span class="tendency-badge <?=$tendency > 0 ? 'tendency-up' : 'tendency-down'?>">
-                <i class="bi bi-arrow-<?=$tendency > 0 ? 'up' : 'down'?>"></i>
-                <?=abs(round($tendency))?>%
-              </span>
-            <?php endif; ?>
           </div>
           <div class="summary-stat-value">€<?=number_format($totalMonth,2)?></div>
         </div>
