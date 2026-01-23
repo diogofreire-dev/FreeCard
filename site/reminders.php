@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $due_date = $_POST['due_date'] ?? '';
         $recurrence = $_POST['recurrence'] ?? 'once';
         $notify_days = intval($_POST['notify_days_before'] ?? 3);
+        $notify_method = $_POST['notify_method'] ?? 'email';
         
         if ($amount > 0 && strlen($name) >= 3 && $due_date) {
             try {
@@ -44,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $stmt = $pdo->prepare("
                     INSERT INTO payment_reminders 
-                    (user_id, name, amount, category, card_id, due_date, recurrence, notify_days_before, next_due_date)
-                    VALUES (:uid, :name, :amount, :category, :card_id, :due_date, :recurrence, :notify, :next_due)
+                    (user_id, name, amount, category, card_id, due_date, recurrence, notify_days_before, notify_method, next_due_date)
+                    VALUES (:uid, :name, :amount, :category, :card_id, :due_date, :recurrence, :notify, :notify_method, :next_due)
                 ");
                 $stmt->execute([
                     ':uid' => $uid,
@@ -56,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':due_date' => $due_date,
                     ':recurrence' => $recurrence,
                     ':notify' => $notify_days,
+                    ':notify_method' => $notify_method,
                     ':next_due' => $next_due
                 ]);
                 
@@ -212,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     UPDATE payment_reminders 
                     SET name = :name, amount = :amount, category = :category, 
                         card_id = :card_id, due_date = :due_date, recurrence = :recurrence,
-                        notify_days_before = :notify, next_due_date = :next_due
+                        notify_days_before = :notify, notify_method = :notify_method, next_due_date = :next_due
                     WHERE id = :id AND user_id = :uid
                 ");
                 $stmt->execute([
@@ -225,6 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':due_date' => $due_date,
                     ':recurrence' => $recurrence,
                     ':notify' => $notify_days,
+                    ':notify_method' => $_POST['notify_method'] ?? 'email',
                     ':next_due' => $next_due
                 ]);
                 
@@ -640,6 +643,16 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
               <option value="7">7 dias antes</option>
             </select>
           </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Como deseja receber as notificações?</label>
+            <select name="notify_method" class="form-select">
+              <option value="email" selected>Email</option>
+              <option value="site">Notificação no Site</option>
+              <option value="both">Email + Notificação</option>
+            </select>
+            <small class="text-muted">Escolhe como queres ser notificado dos lembretes</small>
+          </div>
         </div>
         <div class="modal-footer" style="border: none;">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -759,6 +772,16 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
               <option value="7">7 dias antes</option>
             </select>
           </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Como deseja receber as notificações?</label>
+            <select name="notify_method" id="edit_notify_method" class="form-select">
+              <option value="email">Email</option>
+              <option value="site">Notificação no Site</option>
+              <option value="both">Email + Notificação</option>
+            </select>
+            <small class="text-muted">Escolhe como queres ser notificado dos lembretes</small>
+          </div>
         </div>
         <div class="modal-footer" style="border: none;">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -786,6 +809,7 @@ function openEditModal(reminder) {
   document.getElementById('edit_category').value = reminder.category || '';
   document.getElementById('edit_card_id').value = reminder.card_id || '';
   document.getElementById('edit_notify_days').value = reminder.notify_days_before;
+  document.getElementById('edit_notify_method').value = reminder.notify_method || 'email';
   
   var modal = new bootstrap.Modal(document.getElementById('editReminderModal'));
   modal.show();

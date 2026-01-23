@@ -2,6 +2,8 @@
 // site/dashboard.php
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/budget_alert_helper.php';
+require_once __DIR__ . '/notifications_panel.php';
 $uid = $_SESSION['user_id'] ?? null;
 require_once __DIR__ . '/theme_helper.php';
 $currentTheme = getUserTheme($pdo, $uid);
@@ -15,6 +17,17 @@ $notificationsEnabled = $userSettings['notifications'] ?? 1; // padrão ativado 
 if (!$uid) {
     header('Location: login.php');
     exit;
+}
+
+// Verificar e enviar alertas de orçamento
+if ($notificationsEnabled) {
+    $userStmt = $pdo->prepare("SELECT email, username FROM users WHERE id = :uid");
+    $userStmt->execute([':uid' => $uid]);
+    $user = $userStmt->fetch();
+    
+    if ($user) {
+        checkAndSendBudgetAlerts($pdo, $uid, $user['email'], $user['username']);
+    }
 }
 
 // Total gasto no mês
@@ -526,6 +539,9 @@ $categoryColors = [
   </style>
 </head>
 <body>
+
+<!-- Painel de Notificações -->
+<?php require_once __DIR__ . '/notifications_panel.php'; ?>
 
 <!-- Background animado -->
 <div class="bg-animation">

@@ -1,0 +1,23 @@
+# SISTEMA DE NOTIFICAÇÕES DE LEMBRETES - RESUMO
+
+O sistema de lembretes agora envia conforme a preferência do utilizador (email/site/both).
+
+Ficheiros relevantes:
+- `cron/send_reminders.php` (processamento)
+- `site/reminders.php` (criação/edição de lembretes)
+- `site/notifications_panel.php` (painel no dashboard)
+- `site/mark_notification_read.php` (API para marcar lidas)
+
+Testes:
+- Executar manualmente:
+
+```bash
+C:\xampp\php\php.exe C:\xampp\htdocs\PAP\FreeCard\cron\send_reminders.php
+```
+
+Logs:
+- `cron/send_reminders.log`
+
+DB:
+- Certifica-te que `payment_reminders.notify_method` existe
+- Certifica-te que tabela `notifications` existe

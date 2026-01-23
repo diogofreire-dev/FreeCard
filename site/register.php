@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/EmailService.php';
 
 function validatePassword($password) {
     if (strlen($password) < 8) return false;
@@ -34,7 +36,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ins = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:u, :e, :p)');
             $ins->execute([':u' => $username, ':e' => $email, ':p' => $hash]);
 
-            $_SESSION['user_id'] = $pdo->lastInsertId();
+            $userId = $pdo->lastInsertId();
+            
+            // Enviar email de boas-vindas
+            $emailSent = false;
+            try {
+                $emailService = new EmailService();
+                $emailSent = $emailService->sendWelcomeEmail($email, $username);
+                if ($emailSent) {
+                    error_log("Email de boas-vindas enviado para: $email ($username)");
+                } else {
+                    error_log("Falha ao enviar email de boas-vindas para: $email ($username)");
+                }
+            } catch (Exception $e) {
+                error_log("Erro ao enviar email de boas-vindas: " . $e->getMessage());
+            }
+
+            $_SESSION['user_id'] = $userId;
             $_SESSION['username'] = $username;
             session_regenerate_id(true);
             header('Location: dashboard.php');
