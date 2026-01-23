@@ -617,6 +617,23 @@ $categoryColors = [
       </div>
     <?php endif; ?>
 
+  <div class="card shadow-sm mb-4">
+    <div class="card-body py-3 px-4">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-file-earmark-pdf" style="font-size: 24px; color: #e74c3c;"></i>
+          <div>
+            <small class="text-muted d-block" style="font-size: 12px;">Relatórios</small>
+            <strong>Exporta os teus dados em PDF</strong>
+          </div>
+        </div>
+        <a href="export_pdf.php" class="btn btn-sm btn-danger">
+          <i class="bi bi-download"></i> Exportar PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-4">
     <div class="col-12 col-lg-4">
       <div class="summary-card">
@@ -901,6 +918,7 @@ $categoryColors = [
           <?php endif; ?>
         </div>
       </div>
+
     </div>
   </div>
 </div>
