@@ -50,6 +50,10 @@
   color: var(--text-primary) !important;
 }
 
+[data-theme="dark"] .navbar-brand img {
+  filter: brightness(0) invert(1);
+}
+
 [data-theme="dark"] .navbar-light .nav-link:hover {
   color: #3498db !important;
 }
@@ -341,11 +345,11 @@
   z-index: auto !important;
 }
 
-/* Versão simples - apenas separadores verticais */
+/* Separadores verticais */
 .navbar-nav .nav-item:not(:last-child) {
   border-right: 1px solid var(--border-color);
-  padding-right: 0.30rem;
-  margin-right: 0.30rem;
+  padding-right: 0.10rem;
+  margin-right: 0.10rem;
 }
 
 /* Remover em mobile */

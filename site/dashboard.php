@@ -51,12 +51,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([':uid' => $uid]);
 $totalLastMonth = $stmt->fetchColumn();
 
-// Calcular tendência
-$tendency = 0;
-if ($totalLastMonth > 0) {
-    $tendency = (($totalMonth - $totalLastMonth) / $totalLastMonth) * 100;
-}
-
 // Transacções últimos 30 dias
 $stmt = $pdo->prepare("
     SELECT COUNT(*) 
@@ -468,26 +462,6 @@ $categoryColors = [
       margin: 0;
     }
     
-    .tendency-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border-radius: 300px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .tendency-up {
-      background:  var(--bg-primary);
-      color: #e74c3c;
-      border: 1px solid #e74c3c;
-    }
-    .tendency-down {
-      background:  var(--bg-primary);
-      color: #0a0;
-      border: 1px solid #0a0;
-    }
-    
     .transaction-item {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
@@ -659,6 +633,23 @@ $categoryColors = [
       </div>
     <?php endif; ?>
 
+  <div class="card shadow-sm mb-4">
+    <div class="card-body py-3 px-4">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-file-earmark-pdf" style="font-size: 24px; color: #e74c3c;"></i>
+          <div>
+            <small class="text-muted d-block" style="font-size: 12px;">Relatórios</small>
+            <strong>Exporta os teus dados em PDF</strong>
+          </div>
+        </div>
+        <a href="export_pdf.php" class="btn btn-sm btn-danger">
+          <i class="bi bi-download"></i> Exportar PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-4">
     <div class="col-12 col-lg-4">
       <div class="summary-card">
@@ -667,12 +658,6 @@ $categoryColors = [
         <div class="summary-stat">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="summary-stat-label">Gasto este mês</span>
-            <?php if ($tendency != 0): ?>
-              <span class="tendency-badge <?=$tendency > 0 ? 'tendency-up' : 'tendency-down'?>">
-                <i class="bi bi-arrow-<?=$tendency > 0 ? 'up' : 'down'?>"></i>
-                <?=abs(round($tendency))?>%
-              </span>
-            <?php endif; ?>
           </div>
           <div class="summary-stat-value">€<?=number_format($totalMonth,2)?></div>
         </div>
@@ -949,6 +934,7 @@ $categoryColors = [
           <?php endif; ?>
         </div>
       </div>
+
     </div>
   </div>
 </div>

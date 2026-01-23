@@ -286,8 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .form-control:focus {
       border-color: var(--primary-blue);
-      box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
-      transform: translateY(-2px);
+      box-shadow: none;
     }
     
     .btn-primary {
@@ -395,8 +394,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .input-group:focus-within .input-group-text {
       border-color: var(--primary-blue);
-      background: rgba(52, 152, 219, 0.1);
-      transform: translateX(3px);
     }
     
     .back-link {

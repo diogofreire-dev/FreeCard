@@ -441,6 +441,97 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     [data-theme="dark"] .text-muted {
       color: var(--text-secondary) !important;
     }
+
+    /* Corrigir ícones dos inputs no tema escuro */
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+    [data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+    [data-theme="dark"] input[type="number"]::-webkit-outer-spin-button {
+      filter: invert(1);
+    }
+
+    /* Remover setas do input number */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Header da página responsivo */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .page-header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-header-buttons {
+        width: 100%;
+      }
+
+      .page-header-buttons .btn {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .stat-item:not(:last-child) {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+      }
+
+      /* Reminder cards em mobile */
+      .reminder-card .d-flex.justify-content-between.align-items-start {
+        flex-direction: column !important;
+        gap: 12px;
+      }
+
+      .reminder-card .text-end.ms-3 {
+        margin-left: 0 !important;
+        text-align: left !important;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .reminder-card .d-flex.justify-content-between.flex-wrap {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .reminder-card .reminder-actions {
+        width: 100%;
+      }
+
+      .reminder-card .reminder-actions .btn,
+      .reminder-card .reminder-actions form {
+        flex: 1;
+      }
+
+      .reminder-card .reminder-actions form .btn {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -488,14 +579,16 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
 </nav>
 
 <div class="container mt-4 mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header">
     <div>
       <h2><i class="bi bi-calendar-check"></i> Lembretes de Pagamento</h2>
       <p class="text-muted mb-0">Gere os teus pagamentos futuros e despesas recorrentes</p>
     </div>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newReminderModal">
-      <i class="bi bi-plus-circle"></i> Novo Lembrete
-    </button>
+    <div class="page-header-buttons">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newReminderModal">
+        <i class="bi bi-plus-circle"></i> Novo Lembrete
+      </button>
+    </div>
   </div>
 
   <?php if ($message): ?>
