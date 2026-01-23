@@ -1,0 +1,53 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║           SISTEMA DE NOTIFICAÇÕES DE LEMBRETES - PRONTO!             ║
+║         Agora os lembretes são enviados COMO você escolhe!            ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────────────┐
+│   O QUE MUDOU?                                                      │
+└───────────────────────────────────────────────────────────────────────┘
+
+ANTES:
+  └─ Os lembretes eram enviados APENAS por email
+
+AGORA:
+  ├─  Email - Recebe notificação por email
+  ├─  Site - Vê notificação no dashboard (canto superior direito)
+  └─  Ambos - Recebe email E vê no site
+
+┌───────────────────────────────────────────────────────────────────────┐
+│   COMO USAR?                                                        │
+└───────────────────────────────────────────────────────────────────────┘
+
+PASSO 1: Criar um novo lembrete
+─────────────────────────────────
+1. Vai a http://localhost/PAP/FreeCard/site/reminders.php
+2. Clica em "+ Novo Lembrete"
+3. Preenche:
+   - Nome: "Netflix"
+   - Valor: "12.99"
+   - Data de vencimento: "25/01/2026"
+   - Recorrência: "Mensal"
+   - Notificar com quantos dias: "3 dias antes" ← IMPORTANTE!
+   
+4.  NOVO CAMPO:
+   "Como deseja receber as notificações?"
+   └─ Escolhe:  Email  /   Site  /   Ambos
+   
+5. Clica em "Criar Lembrete"
+
+PASSO 2: Editar um lembrete existente
+──────────────────────────────────────
+1. Na página de Lembretes, clica em "Editar"
+2. Altera o método de notificação se quiser
+3. Clica em "Guardar Alterações"
+
+PASSO 3: Ver as notificações
+─────────────────────────────
+Se escolheu " Site" ou " Ambos":
+└─ Vai ao Dashboard
+   └─ Olha para o canto SUPERIOR DIREITO
+   └─ Verá as notificações aparecer em tempo real
+   └─ Clica em X para descartar
+
+... (remainder preserved) ...

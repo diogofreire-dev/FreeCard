@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $due_date = $_POST['due_date'] ?? '';
         $recurrence = $_POST['recurrence'] ?? 'once';
         $notify_days = intval($_POST['notify_days_before'] ?? 3);
+        $notify_method = $_POST['notify_method'] ?? 'email';
         
         if ($amount > 0 && strlen($name) >= 3 && $due_date) {
             try {
@@ -44,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $stmt = $pdo->prepare("
                     INSERT INTO payment_reminders 
-                    (user_id, name, amount, category, card_id, due_date, recurrence, notify_days_before, next_due_date)
-                    VALUES (:uid, :name, :amount, :category, :card_id, :due_date, :recurrence, :notify, :next_due)
+                    (user_id, name, amount, category, card_id, due_date, recurrence, notify_days_before, notify_method, next_due_date)
+                    VALUES (:uid, :name, :amount, :category, :card_id, :due_date, :recurrence, :notify, :notify_method, :next_due)
                 ");
                 $stmt->execute([
                     ':uid' => $uid,
@@ -56,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':due_date' => $due_date,
                     ':recurrence' => $recurrence,
                     ':notify' => $notify_days,
+                    ':notify_method' => $notify_method,
                     ':next_due' => $next_due
                 ]);
                 
@@ -212,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     UPDATE payment_reminders 
                     SET name = :name, amount = :amount, category = :category, 
                         card_id = :card_id, due_date = :due_date, recurrence = :recurrence,
-                        notify_days_before = :notify, next_due_date = :next_due
+                        notify_days_before = :notify, notify_method = :notify_method, next_due_date = :next_due
                     WHERE id = :id AND user_id = :uid
                 ");
                 $stmt->execute([
@@ -225,6 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':due_date' => $due_date,
                     ':recurrence' => $recurrence,
                     ':notify' => $notify_days,
+                    ':notify_method' => $_POST['notify_method'] ?? 'email',
                     ':next_due' => $next_due
                 ]);
                 
@@ -331,7 +334,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     [data-theme="light"] body::before {
       content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e8f5e9 100%);
+      background: linear-gradient(135deg, #e8eef5ff 0%, #e9eef8ff 50%, #e8edf5ff 100%);
       z-index: -1;
     }
     [data-theme="dark"] body::before {
@@ -343,8 +346,8 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
       position: absolute; border-radius: 50%;
       animation: float 20s infinite ease-in-out;
     }
-    [data-theme="light"] .floating-shape { background: rgba(46, 204, 113); }
-    [data-theme="dark"] .floating-shape { background: rgba(46, 204, 113); }
+    [data-theme="light"] .floating-shape { background: rgba(46, 88, 204); }
+    [data-theme="dark"] .floating-shape { background: rgba(46, 88, 204); }
     .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
     .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
     .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
@@ -360,15 +363,15 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     .navbar, .container { position: relative; z-index: 1; }
     
-    :root { --primary-green: #2ecc71; --dark-green: #27ae60; }
+    :root { --primary-blue: #3498db; --dark-blue: #2980b9; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-primary); color: var(--text-primary);
     }
     .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: var(--navbar-bg); }
     .navbar-brand img { height: 35px; margin-right: 8px; }
-    .btn-primary { background: var(--primary-green); border-color: var(--primary-green); }
-    .btn-primary:hover { background: var(--dark-green); border-color: var(--dark-green); }
+    .btn-primary { background: var(--primary-blue); border-color: var(--primary-blue); }
+    .btn-primary:hover { background: var(--dark-blue); border-color: var(--dark-blue); }
     
     .card {
       border: none; border-radius: 16px; box-shadow: 0 4px 20px var(--shadow);
@@ -429,7 +432,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     .form-control:focus, .form-select:focus {
       background: var(--bg-primary); color: var(--text-primary);
-      border-color: var(--primary-green);
+      border-color: var(--primary-blue);
     }
     
     [data-theme="dark"] .form-control::placeholder {
@@ -640,6 +643,16 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
               <option value="7">7 dias antes</option>
             </select>
           </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Como deseja receber as notificações?</label>
+            <select name="notify_method" class="form-select">
+              <option value="email" selected>Email</option>
+              <option value="site">Notificação no Site</option>
+              <option value="both">Email + Notificação</option>
+            </select>
+            <small class="text-muted">Escolhe como queres ser notificado dos lembretes</small>
+          </div>
         </div>
         <div class="modal-footer" style="border: none;">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -759,6 +772,16 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
               <option value="7">7 dias antes</option>
             </select>
           </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Como deseja receber as notificações?</label>
+            <select name="notify_method" id="edit_notify_method" class="form-select">
+              <option value="email">Email</option>
+              <option value="site">Notificação no Site</option>
+              <option value="both">Email + Notificação</option>
+            </select>
+            <small class="text-muted">Escolhe como queres ser notificado dos lembretes</small>
+          </div>
         </div>
         <div class="modal-footer" style="border: none;">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -786,6 +809,7 @@ function openEditModal(reminder) {
   document.getElementById('edit_category').value = reminder.category || '';
   document.getElementById('edit_card_id').value = reminder.card_id || '';
   document.getElementById('edit_notify_days').value = reminder.notify_days_before;
+  document.getElementById('edit_notify_method').value = reminder.notify_method || 'email';
   
   var modal = new bootstrap.Modal(document.getElementById('editReminderModal'));
   modal.show();

@@ -1,0 +1,10 @@
+{
+    "name": "freecard/app",
+    "description": "FreeCard - Credit Card Management System",
+    "require": {
+        "phpmailer/phpmailer": "^6.8"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}
