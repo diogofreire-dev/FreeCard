@@ -480,9 +480,6 @@ foreach ($transactions as $t) {
       <p class="text-muted mb-0">Histórico completo de despesas</p>
     </div>
     <div class="page-header-buttons">
-      <a href="export_pdf.php" class="btn btn-danger">
-        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-      </a>
       <a href="create_transaction.php" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Nova Transação
       </a>

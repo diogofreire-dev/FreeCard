@@ -450,9 +450,6 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       <p class="text-muted mb-0">Gere os teus cartões e acompanha os limites</p>
     </div>
     <div class="page-header-buttons">
-      <a href="export_pdf.php" class="btn btn-danger">
-        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-      </a>
       <a href="add_card.php" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Adicionar Cartão
       </a>
