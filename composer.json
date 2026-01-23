@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "name": "freecard/app",
     "description": "FreeCard - Credit Card Management System",
     "require": {
@@ -7,9 +6,5 @@
     },
     "config": {
         "vendor-dir": "vendor"
-=======
-    "require": {
-        "tecnickcom/tcpdf": "^6.10"
->>>>>>> 186ef87fc9ab262c337f6b226224f80cb2278746
     }
 }
