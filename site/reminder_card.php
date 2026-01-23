@@ -44,6 +44,17 @@
           ?>
         </span>
         
+        <?php
+          $notifyMethod = $r['notify_method'] ??
+          $notifyLabel = match($notifyMethod) {
+            'email' => 'Email',
+            'site' => 'Site',
+            'both' => 'Email+Site',
+            default => 'Email'
+          };
+        ?>
+        <span class="badge bg-info"><?= $notifyIcon ?> <?= $notifyLabel ?></span>
+        
         <?php if ($r['category']): ?>
           <span class="badge bg-secondary"><?=htmlspecialchars($r['category'])?></span>
         <?php endif; ?>

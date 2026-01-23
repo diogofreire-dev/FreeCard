@@ -1,0 +1,5 @@
+# SISTEMA DE NOTIFICAÇÕES DE LEMBRETES - RESUMO
+
+(Copiado para docs/email)
+
+Instruções de configuração e teste.
