@@ -352,17 +352,49 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
       .d-flex.gap-2.mb-2 {
         flex-direction: column !important;
       }
-      
+
       .d-flex.gap-2.mb-2 > * {
         width: 100% !important;
       }
-      
+
       .d-flex.gap-2.mb-2 form {
         width: 100% !important;
       }
-      
+
       .d-flex.gap-2.mb-2 .btn {
         width: 100% !important;
+      }
+    }
+
+    /* Header da página responsivo */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .page-header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-header-buttons {
+        width: 100%;
+      }
+
+      .page-header-buttons .btn {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
       }
     }
   </style>
@@ -412,14 +444,16 @@ $inactiveAvailable = $inactiveTotalLimit - $inactiveTotalBalance;
 </nav>
 
 <div class="container mt-4 mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header">
     <div>
       <h2><i class="bi bi-wallet2"></i> Os Meus Cartões</h2>
       <p class="text-muted mb-0">Gere os teus cartões e acompanha os limites</p>
     </div>
-    <a href="add_card.php" class="btn btn-primary">
-      <i class="bi bi-plus-circle"></i> Adicionar Cartão
-    </a>
+    <div class="page-header-buttons">
+      <a href="add_card.php" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Adicionar Cartão
+      </a>
+    </div>
   </div>
 
   <?php if ($message): ?>

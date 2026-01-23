@@ -306,34 +306,11 @@
       background: white;
       border-radius: 24px;
       padding: 40px;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      border: 2px solid transparent;
+      border: 1px solid #e0e0e0;
       height: 100%;
       position: relative;
       overflow: hidden;
-      cursor: pointer;
-    }
-    
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary-green), var(--light-green));
-      transform: scaleX(0);
-      transition: transform 0.4s;
-    }
-    
-    .feature-card:hover::before {
-      transform: scaleX(1);
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-15px);
-      box-shadow: 0 30px 60px rgba(46, 88, 204, 0.15);
-      border-color: var(--light-green);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
     
     .feature-icon {
@@ -347,13 +324,7 @@
       margin-bottom: 24px;
       color: white;
       font-size: 36px;
-      transition: all 0.4s;
       box-shadow: 0 10px 30px rgba(46, 88, 204, 0.15);
-    }
-    
-    .feature-card:hover .feature-icon {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 15px 40px rgba(46, 88, 204, 0.5);
     }
     
     .feature-card:nth-child(2) .feature-icon {
@@ -602,7 +573,7 @@
   <div class="container">
     <div class="row align-items-center">
       <div class="col-lg-6 hero-content">
-        <h1>Controla as tuas <span>finanças</span> com simplicidade</h1>
+        <h1>Controla os teus <span>cartões</span> com simplicidade</h1>
         <p>Gere os teus cartões e transações de forma inteligente. Acompanha os teus gastos e mantém-te sempre dentro do orçamento.</p>
         <div class="hero-buttons">
           <a href="register.php" class="btn-hero">
@@ -688,6 +659,15 @@
           <p>Cria lembretes para pagamentos recorrentes e despesas futuras. Recebe notificações antecipadas e mantém o controlo sobre todas as tuas obrigações financeiras.</p>
         </div>
       </div>
+      <div class="col-lg-4 col-md-6 fade-in">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-file-earmark-pdf"></i>
+          </div>
+          <h4>Exportar Relatórios PDF</h4>
+          <p>Exporta relatórios detalhados das tuas transações e cartões em formato PDF. Perfeito para arquivo pessoal ou partilha de informações financeiras.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -755,7 +735,7 @@
       </div>
       <div class="col-md-3">
         <h6 class="mb-3">Projeto</h6>
-        <p class="text-light small">Projeto de Aptidão Profissional<br>Desenvolvido por Diogo Freire e Jandro Antunes</p>
+        <p class="text-light small">Prova de Aptidão Profissional<br>Desenvolvido por Diogo Freire e Jandro Antunes</p>
       </div>
     </div>
     <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
