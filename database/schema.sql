@@ -139,6 +139,8 @@ CREATE TABLE IF NOT EXISTS payment_reminders (
   active TINYINT(1) DEFAULT 1 COMMENT 'Lembrete ativo',
   -- Notificações
   notify_days_before INT DEFAULT 3 COMMENT 'Notificar X dias antes do vencimento',
+  notify_method ENUM('email', 'site', 'both') DEFAULT 'email' COMMENT 'Como notificar: email, site ou ambos',
+  last_notification_sent DATETIME NULL COMMENT 'Última vez que foi enviada notificação',
   -- Tracking
   last_paid_date DATE NULL COMMENT 'Última vez que foi marcado como pago',
   next_due_date DATE NULL COMMENT 'Próxima data calculada (para recorrentes)',
