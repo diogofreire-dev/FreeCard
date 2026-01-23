@@ -439,6 +439,23 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
       color: var(--text-secondary) !important;
     }
 
+    /* Corrigir ícones dos inputs no tema escuro */
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+    [data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+    [data-theme="dark"] input[type="number"]::-webkit-outer-spin-button {
+      filter: invert(1);
+    }
+
+    /* Remover setas do input number */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
     /* Header da página responsivo */
     .page-header {
       display: flex;

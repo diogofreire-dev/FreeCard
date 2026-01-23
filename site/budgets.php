@@ -327,8 +327,8 @@ $cards = $stmt->fetchAll();
     .form-control:focus, .form-select:focus {
       background: var(--bg-primary);
       color: var(--text-primary);
-      border-color: var(--primary-green);
-      box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.25);
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 0.2rem rgba(46, 101, 204, 0.25);
     }
     
     /* Corrigir visibilidade do texto nos inputs no tema escuro */
@@ -395,6 +395,25 @@ $cards = $stmt->fetchAll();
         white-space: nowrap;
         font-size: 0.875rem;
         padding: 0.5rem 0.75rem;
+      }
+
+      /* Budget cards em mobile */
+      .budget-card .d-flex.justify-content-between.flex-wrap {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .budget-card .budget-actions {
+        width: 100%;
+      }
+
+      .budget-card .budget-actions .btn,
+      .budget-card .budget-actions form {
+        flex: 1;
+      }
+
+      .budget-card .budget-actions form .btn {
+        width: 100%;
       }
     }
   </style>
@@ -492,56 +511,22 @@ $cards = $stmt->fetchAll();
         ?>
         <div class="col-md-6 col-xl-4">
           <div class="budget-card <?=$statusClass?> <?=!$b['active'] ? 'opacity-50' : ''?>">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <div>
-                <h5 class="mb-1"><?=htmlspecialchars($b['name'])?></h5>
-                <div class="d-flex gap-2 flex-wrap">
+            <div class="mb-3">
+              <h5 class="mb-1"><?=htmlspecialchars($b['name'])?></h5>
+              <div class="d-flex gap-2 flex-wrap">
+                <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
+                  <i class="bi bi-calendar-event"></i> <?=$periodLabels[$b['period']]?>
+                </span>
+                <?php if($b['category']): ?>
                   <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
-                    <i class="bi bi-calendar-event"></i> <?=$periodLabels[$b['period']]?>
+                    <i class="bi bi-tag"></i> <?=htmlspecialchars($b['category'])?>
                   </span>
-                  <?php if($b['category']): ?>
-                    <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
-                      <i class="bi bi-tag"></i> <?=htmlspecialchars($b['category'])?>
-                    </span>
-                  <?php endif; ?>
-                  <?php if($b['card_name']): ?>
-                    <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
-                      <i class="bi bi-credit-card"></i> <?=htmlspecialchars($b['card_name'])?>
-                    </span>
-                  <?php endif; ?>
-                </div>
-              </div>
-              <div class="dropdown">
-                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
-                  <i class="bi bi-three-dots-vertical"></i>
-                </button>
-                <ul class="dropdown-menu">
-                  <li>
-                    <button type="button" class="dropdown-item" onclick="editBudget(<?=htmlspecialchars(json_encode($b))?>)">
-                      <i class="bi bi-pencil"></i> Editar
-                    </button>
-                  </li>
-                  <li>
-                    <form method="post" class="d-inline">
-                      <input type="hidden" name="action" value="toggle">
-                      <input type="hidden" name="budget_id" value="<?=$b['id']?>">
-                      <button type="submit" class="dropdown-item">
-                        <i class="bi bi-<?=$b['active'] ? 'pause' : 'play'?>-circle"></i>
-                        <?=$b['active'] ? 'Desativar' : 'Ativar'?>
-                      </button>
-                    </form>
-                  </li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li>
-                    <form method="post" class="d-inline" onsubmit="return confirm('Tens a certeza?');">
-                      <input type="hidden" name="action" value="delete">
-                      <input type="hidden" name="budget_id" value="<?=$b['id']?>">
-                      <button type="submit" class="dropdown-item text-danger">
-                        <i class="bi bi-trash"></i> Eliminar
-                      </button>
-                    </form>
-                  </li>
-                </ul>
+                <?php endif; ?>
+                <?php if($b['card_name']): ?>
+                  <span class="badge-period" style="background: var(--bg-hover); color: var(--text-primary);">
+                    <i class="bi bi-credit-card"></i> <?=htmlspecialchars($b['card_name'])?>
+                  </span>
+                <?php endif; ?>
               </div>
             </div>
 
@@ -575,6 +560,30 @@ $cards = $stmt->fetchAll();
                   <?=round($percentage)?>%
                 </strong>
               </div>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="d-flex gap-2 justify-content-between flex-wrap mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+              <div class="d-flex gap-2 flex-wrap budget-actions">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editBudget(<?=htmlspecialchars(json_encode($b))?>)">
+                  <i class="bi bi-pencil"></i> Editar
+                </button>
+                <form method="post" class="d-inline">
+                  <input type="hidden" name="action" value="toggle">
+                  <input type="hidden" name="budget_id" value="<?=$b['id']?>">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-<?=$b['active'] ? 'pause' : 'play'?>-circle"></i>
+                    <?=$b['active'] ? 'Desativar' : 'Ativar'?>
+                  </button>
+                </form>
+              </div>
+              <form method="post" class="d-inline" onsubmit="return confirm('Tens a certeza?');">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="budget_id" value="<?=$b['id']?>">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
             </div>
           </div>
         </div>
