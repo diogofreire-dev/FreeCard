@@ -1,8 +1,8 @@
 <?php
 // site/generate_report_pdf.php
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $uid = $_SESSION['user_id'] ?? null;
 

@@ -1,11 +1,11 @@
 <?php
 // site/dashboard.php
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/helpers/auth.php';
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/budget_alert_helper.php';
-require_once __DIR__ . '/notifications_panel.php';
+require_once __DIR__ . '/helpers/budget_alert_helper.php';
+require_once __DIR__ . '/components/notifications_panel.php';
 $uid = $_SESSION['user_id'] ?? null;
-require_once __DIR__ . '/theme_helper.php';
+require_once __DIR__ . '/helpers/theme_helper.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
 // Buscar configurações do usuário
@@ -15,7 +15,7 @@ $userSettings = $stmt->fetch();
 $notificationsEnabled = $userSettings['notifications'] ?? 1; // padrão ativado se não definido
 
 if (!$uid) {
-    header('Location: login.php');
+    header('Location: auth/login.php');
     exit;
 }
 
@@ -515,7 +515,7 @@ $categoryColors = [
 <body>
 
 <!-- Painel de Notificações -->
-<?php require_once __DIR__ . '/notifications_panel.php'; ?>
+<?php require_once __DIR__ . '/components/notifications_panel.php'; ?>
 
 <!-- Background animado -->
 <div class="bg-animation">
@@ -542,19 +542,19 @@ $categoryColors = [
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link active" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
-        <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
-        <li class="nav-item"><a class="nav-link" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
-        <li class="nav-item"><a class="nav-link" href="reminders.php"><i class="bi bi-calendar-check"></i> Lembretes</a></li>
-        <li class="nav-item"><a class="nav-link" href="analytics.php"><i class="bi bi-graph-up"></i> Análise</a></li>
+        <li class="nav-item"><a class="nav-link" href="pages/cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
+        <li class="nav-item"><a class="nav-link" href="pages/transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
+        <li class="nav-item"><a class="nav-link" href="pages/budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
+        <li class="nav-item"><a class="nav-link" href="pages/reminders.php"><i class="bi bi-calendar-check"></i> Lembretes</a></li>
+        <li class="nav-item"><a class="nav-link" href="pages/analytics.php"><i class="bi bi-graph-up"></i> Análise</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i> <?=htmlspecialchars($_SESSION['username'])?>
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
+            <li><a class="dropdown-item" href="pages/settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            <li><a class="dropdown-item" href="auth/logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
           </ul>
         </li>
       </ul>
@@ -608,7 +608,7 @@ $categoryColors = [
               <strong><?=htmlspecialchars($r['name'])?></strong> -
               €<?=number_format($r['amount'], 2)?>
               (<?=abs($r['days_until'])?> dia(s) atrasado)
-              <a href="reminders.php" class="alert-link">Ver detalhes</a>
+              <a href="pages/reminders.php" class="alert-link">Ver detalhes</a>
             </li>
           <?php endforeach; ?>
         </ul>
@@ -625,7 +625,7 @@ $categoryColors = [
               <strong><?=htmlspecialchars($r['name'])?></strong> -
               €<?=number_format($r['amount'], 2)?>
               (vence em <?=$r['days_until']?> dia(s))
-              <a href="reminders.php" class="alert-link">Gerir</a>
+              <a href="pages/reminders.php" class="alert-link">Gerir</a>
             </li>
           <?php endforeach; ?>
         </ul>
@@ -643,7 +643,7 @@ $categoryColors = [
             <strong>Exporta os teus dados em PDF</strong>
           </div>
         </div>
-        <a href="export_pdf.php" class="btn btn-sm btn-danger">
+        <a href="pages/export_pdf.php" class="btn btn-sm btn-danger">
           <i class="bi bi-download"></i> Exportar PDF
         </a>
       </div>
@@ -674,10 +674,10 @@ $categoryColors = [
         </div>
         
         <div class="d-grid gap-2">
-          <a href="create_transaction.php" class="btn btn-primary">
+          <a href="pages/create_transaction.php" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> Nova Transação
           </a>
-          <a href="add_card.php" class="btn btn-outline-primary">
+          <a href="pages/add_card.php" class="btn btn-outline-primary">
             <i class="bi bi-credit-card-2-front"></i> Adicionar Cartão
           </a>
         </div>
@@ -689,7 +689,7 @@ $categoryColors = [
           <?php if (empty($cards)): ?>
             <div class="text-center py-3">
               <p class="text-muted mb-2">Ainda não tens cartões</p>
-              <a href="add_card.php" class="btn btn-sm btn-primary">Adicionar primeiro cartão</a>
+              <a href="pages/add_card.php" class="btn btn-sm btn-primary">Adicionar primeiro cartão</a>
             </div>
           <?php else: ?>
             <?php 
@@ -742,7 +742,7 @@ $categoryColors = [
               </div>
             <?php endif; ?>
             
-            <a href="cards.php" class="btn btn-sm btn-outline-secondary w-100 mt-2">Gerir todos os cartões</a>
+            <a href="pages/cards.php" class="btn btn-sm btn-outline-secondary w-100 mt-2">Gerir todos os cartões</a>
           <?php endif; ?>
         </div>
       </div>
@@ -824,7 +824,7 @@ $categoryColors = [
           <?php endif; ?>
           
           <div class="text-center mt-3">
-            <a href="analytics.php" class="btn btn-sm btn-outline-primary">Ver análise completa</a>
+            <a href="pages/analytics.php" class="btn btn-sm btn-outline-primary">Ver análise completa</a>
           </div>
         </div>
       </div>
@@ -838,7 +838,7 @@ $categoryColors = [
           <?php if (empty($recent)): ?>
             <div class="text-center py-5">
               <p class="text-muted mb-3">Ainda não tens transações registadas</p>
-              <a href="create_transaction.php" class="btn btn-primary">Criar primeira transação</a>
+              <a href="pages/create_transaction.php" class="btn btn-primary">Criar primeira transação</a>
             </div>
           <?php else: ?>
             <?php 
@@ -877,7 +877,7 @@ $categoryColors = [
             <?php endif; ?>
             
             <div class="text-center mt-3">
-              <a href="transactions.php" class="btn btn-outline-primary">Ver todas as transações</a>
+              <a href="pages/transactions.php" class="btn btn-outline-primary">Ver todas as transações</a>
             </div>
           <?php endif; ?>
         </div>
@@ -908,7 +908,7 @@ $categoryColors = [
                       </strong>
                     </div>
                   </div>
-                  <a href="budgets.php" class="btn btn-sm btn-outline-primary">
+                  <a href="pages/budgets.php" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-arrow-right"></i> Ver Detalhes
                   </a>
                 </div>
@@ -925,7 +925,7 @@ $categoryColors = [
                       <strong>Nenhum orçamento definido</strong>
                     </div>
                   </div>
-                  <a href="budgets.php" class="btn btn-sm btn-primary">
+                  <a href="pages/budgets.php" class="btn btn-sm btn-primary">
                     <i class="bi bi-plus-circle"></i> Criar Orçamento
                   </a>
                 </div>

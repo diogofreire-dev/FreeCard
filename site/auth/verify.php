@@ -1,8 +1,8 @@
 <?php
 session_start();
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/EmailService.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../config/EmailService.php';
 
 $token = $_GET['token'] ?? '';
 $status = 'invalid'; // 'invalid', 'expired', 'success'
@@ -367,7 +367,7 @@ if ($token !== '') {
         </li>
       </ul>
       
-      <a href="dashboard.php" class="btn-primary">
+      <a href="../dashboard.php" class="btn-primary">
         <i class="bi bi-speedometer2 me-2"></i>
         Ir para o Dashboard
       </a>
@@ -395,7 +395,7 @@ if ($token !== '') {
         <i class="bi bi-box-arrow-in-right me-2"></i>
         Fazer Login
       </a>
-      <a href="index.php" class="btn-secondary">
+      <a href="../index.php" class="btn-secondary">
         <i class="bi bi-house me-2"></i>
         Página Inicial
       </a>
@@ -423,7 +423,7 @@ if ($token !== '') {
         <i class="bi bi-envelope me-2"></i>
         Solicitar Novo Email
       </a>
-      <a href="index.php" class="btn-secondary">
+      <a href="../index.php" class="btn-secondary">
         <i class="bi bi-house me-2"></i>
         Página Inicial
       </a>

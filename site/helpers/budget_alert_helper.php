@@ -5,8 +5,8 @@
  * Verifica orçamentos e envia emails quando atingem limites
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/EmailService.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../config/EmailService.php';
 
 function checkAndSendBudgetAlerts($pdo, $userId, $email, $username) {
     /**

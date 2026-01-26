@@ -1,62 +1,29 @@
 <?php
+// site/auth/login.php
 session_start();
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/EmailService.php';
-
-function validatePassword($password) {
-    if (strlen($password) < 8) return false;
-    if (!preg_match('/[A-Z]/', $password)) return false;
-    if (!preg_match('/[a-z]/', $password)) return false;
-    if (!preg_match('/[0-9]/', $password)) return false;
-    if (!preg_match('/[^A-Za-z0-9]/', $password)) return false;
-    return true;
-}
+require_once __DIR__ . '/../../config/db.php';
 
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $email = trim($_POST['email'] ?? '');
+    $emailOrUsername = trim($_POST['email_or_username'] ?? '');
     $password = $_POST['password'] ?? '';
-    $password2 = $_POST['password2'] ?? '';
 
-    if ($username === '' || strlen($username) < 3) $errors[] = 'Nome de utilizador inválido (mínimo 3 caracteres).';
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email inválido.';
-    if (!validatePassword($password)) $errors[] = 'A palavra-passe deve ter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais.';
-    if ($password !== $password2) $errors[] = 'As palavras-passe não coincidem.';
+    if ($emailOrUsername === '' || $password === '') {
+        $errors[] = 'Preenche todos os campos.';
+    } else {
+        $stmt = $pdo->prepare('SELECT id, username, password_hash FROM users WHERE email = :e OR username = :u LIMIT 1');
+        $stmt->execute([':e' => $emailOrUsername, ':u' => $emailOrUsername]);
+        $user = $stmt->fetch();
 
-    if (empty($errors)) {
-        $stmt = $pdo->prepare('SELECT id FROM users WHERE username = :u OR email = :e LIMIT 1');
-        $stmt->execute([':u' => $username, ':e' => $email]);
-        if ($stmt->fetch()) {
-            $errors[] = 'Nome de utilizador ou email já em uso.';
-        } else {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            $ins = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:u, :e, :p)');
-            $ins->execute([':u' => $username, ':e' => $email, ':p' => $hash]);
-
-            $userId = $pdo->lastInsertId();
-            
-            // Enviar email de boas-vindas
-            $emailSent = false;
-            try {
-                $emailService = new EmailService();
-                $emailSent = $emailService->sendWelcomeEmail($email, $username);
-                if ($emailSent) {
-                    error_log("Email de boas-vindas enviado para: $email ($username)");
-                } else {
-                    error_log("Falha ao enviar email de boas-vindas para: $email ($username)");
-                }
-            } catch (Exception $e) {
-                error_log("Erro ao enviar email de boas-vindas: " . $e->getMessage());
-            }
-
-            $_SESSION['user_id'] = $userId;
-            $_SESSION['username'] = $username;
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
             session_regenerate_id(true);
-            header('Location: dashboard.php');
+            header('Location: ../dashboard.php');
             exit;
+        } else {
+            $errors[] = 'Credenciais inválidas.';
         }
     }
 }
@@ -66,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registar - FreeCard</title>
+  <title>Entrar - FreeCard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
@@ -115,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 300px;
       height: 300px;
       top: -100px;
-      right: -100px;
+      left: -100px;
       animation-delay: 0s;
     }
     
@@ -123,23 +90,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 200px;
       height: 200px;
       bottom: -50px;
-      left: -50px;
+      right: -50px;
       animation-delay: 5s;
     }
     
     .shape3 {
       width: 150px;
       height: 150px;
-      top: 40%;
-      left: 10%;
+      top: 50%;
+      right: 10%;
       animation-delay: 2s;
     }
     
     .shape4 {
       width: 100px;
       height: 100px;
-      bottom: 30%;
-      right: 15%;
+      bottom: 20%;
+      left: 15%;
       animation-delay: 7s;
     }
     
@@ -181,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
     
-    .register-container {
+    .login-container {
       min-width: 320px;
       max-width: 450px;
       width: 100%;
@@ -203,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
     
-    .register-card {
+    .login-card {
       background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(10px);
       border-radius: 20px;
@@ -212,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    .register-header {
+    .login-header {
       background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
       padding: 40px 40px 30px;
       text-align: center;
@@ -221,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       overflow: hidden;
     }
     
-    .register-header::before {
+    .login-header::before {
       content: '';
       position: absolute;
       top: -50%;
@@ -256,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       filter: drop-shadow(0 4px 8px rgba(52, 152, 219, 0.2));
     }
     
-    .register-header h1 {
+    .login-header h1 {
       font-size: 28px;
       font-weight: 700;
       color: #2c3e50;
@@ -265,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       z-index: 1;
     }
     
-    .register-header p {
+    .login-header p {
       color: #7f8c8d;
       font-size: 15px;
       margin: 0;
@@ -273,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       z-index: 1;
     }
     
-    .register-body {
+    .login-body {
       padding: 40px;
       position: relative;
     }
@@ -286,8 +253,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .form-group:nth-child(1) { animation-delay: 0.1s; }
     .form-group:nth-child(2) { animation-delay: 0.2s; }
     .form-group:nth-child(3) { animation-delay: 0.3s; }
-    .form-group:nth-child(4) { animation-delay: 0.4s; }
-    .form-group:nth-child(5) { animation-delay: 0.5s; }
     
     @keyframes fadeInUp {
       from {
@@ -374,19 +339,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       75% { transform: translateX(10px); }
     }
     
-    .login-link {
+    .register-link {
       text-align: center;
       padding: 20px 40px 30px;
       background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
       border-top: 1px solid #e9ecef;
     }
     
-    .login-link p {
+    .register-link p {
       margin: 0;
       color: #7f8c8d;
     }
     
-    .login-link a {
+    .register-link a {
       color: var(--primary-blue);
       font-weight: 600;
       text-decoration: none;
@@ -394,7 +359,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transition: color 0.3s;
     }
 
-    .login-link a::after {
+    .register-link a::after {
       content: '';
       position: absolute;
       bottom: -2px;
@@ -405,11 +370,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transition: width 0.3s;
     }
 
-    .login-link a:hover {
+    .register-link a:hover {
       color: var(--dark-blue);
     }
-    
-    .login-link a:hover::after {
+
+    .register-link a:hover::after {
       width: 100%;
     }
     
@@ -429,67 +394,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .input-group:focus-within .input-group-text {
       border-color: var(--primary-blue);
-    }
-    
-    .password-strength {
-      height: 6px;
-      background: #e9ecef;
-      border-radius: 3px;
-      margin-top: 10px;
-      overflow: hidden;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .password-strength-bar {
-      height: 100%;
-      width: 0;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      border-radius: 3px;
-      position: relative;
-    }
-    
-    .password-strength-bar::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-      animation: shimmer 2s infinite;
-    }
-    
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    
-    .strength-weak { 
-      width: 33%; 
-      background: linear-gradient(90deg, #e74c3c, #c0392b);
-    }
-    
-    .strength-medium { 
-      width: 66%; 
-      background: linear-gradient(90deg, #f39c12, #e67e22);
-    }
-    
-    .strength-strong {
-      width: 100%;
-      background: linear-gradient(90deg, var(--primary-blue), var(--dark-blue));
-    }
-    
-    .password-hint {
-      font-size: 12px;
-      color: #95a5a6;
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    
-    .password-hint i {
-      font-size: 10px;
     }
     
     .back-link {
@@ -518,11 +422,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         padding: 20px 0;
       }
       
-      .register-container {
+      .login-container {
         padding: 15px;
       }
       
-      .register-header, .register-body, .login-link {
+      .login-header, .login-body, .register-link {
         padding-left: 25px;
         padding-right: 25px;
       }
@@ -532,7 +436,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
     
-    @media (max-height: 800px) {
+    @media (max-height: 700px) {
       body {
         padding: 30px 0;
       }
@@ -541,16 +445,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         width: 100px;
       }
       
-      .register-header {
+      .login-header {
         padding: 30px 40px 20px;
       }
       
-      .register-body {
+      .login-body {
         padding: 30px;
-      }
-      
-      .form-group {
-        margin-bottom: 15px;
       }
     }
   </style>
@@ -565,66 +465,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="floating-shape shape4"></div>
 </div>
 
-<div class="register-container">
-  <div class="register-card">
-    <div class="register-header">
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
       <div class="logo-container">
-        <img src="assets/logo.png" alt="Freecard">
+        <img src="../assets/logo.png" alt="Freecard">
       </div>
-      <h1>Cria a tua conta</h1>
-      <p>Começa a gerir as tuas finanças hoje</p>
+      <h1>Bem-vindo de volta</h1>
+      <p>Entra na tua conta para continuar</p>
     </div>
 
-    <div class="register-body">
+    <div class="login-body">
       <?php if(!empty($errors)): ?>
         <div class="alert alert-danger mb-3">
           <i class="bi bi-exclamation-circle"></i>
-          <ul class="mb-0 mt-2 ps-3">
-            <?php foreach($errors as $e): ?>
-              <li><?=htmlspecialchars($e)?></li>
-            <?php endforeach; ?>
-          </ul>
+          <?php foreach($errors as $e): ?>
+            <?=htmlspecialchars($e)?>
+          <?php endforeach; ?>
         </div>
       <?php endif; ?>
 
-      <form method="post" novalidate>
+      <form method="post">
         <div class="form-group">
           <label class="form-label">
             <i class="bi bi-person-circle"></i>
-            Nome de utilizador
+            Email ou Nome de utilizador
           </label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person"></i></span>
             <input 
               type="text" 
-              name="username" 
+              name="email_or_username" 
               class="form-control" 
-              placeholder="Escolhe um nome de utilizador"
-              value="<?=htmlspecialchars($username ?? '')?>" 
+              placeholder="Introduz o teu email ou utilizador"
+              value="<?=htmlspecialchars($emailOrUsername ?? '')?>" 
               required
               autofocus
-            >
-          </div>
-          <div class="password-hint">
-            <i class="bi bi-info-circle"></i>
-            Mínimo 3 caracteres
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <i class="bi bi-envelope-at"></i>
-            Email
-          </label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-            <input 
-              type="email" 
-              name="email" 
-              class="form-control" 
-              placeholder="O teu melhor email"
-              value="<?=htmlspecialchars($email ?? '')?>" 
-              required
             >
           </div>
         </div>
@@ -640,32 +516,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               type="password" 
               name="password" 
               class="form-control" 
-              placeholder="Cria uma palavra-passe segura"
-              id="password"
-              required
-            >
-          </div>
-          <div class="password-strength">
-            <div class="password-strength-bar" id="strength-bar"></div>
-          </div>
-          <div class="password-hint">
-            <i class="bi bi-info-circle"></i>
-            Mínimo 8 caracteres, incluindo maiúsculas, minúsculas, números e especiais
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <i class="bi bi-shield-check"></i>
-            Confirmar palavra-passe
-          </label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-            <input 
-              type="password" 
-              name="password2" 
-              class="form-control" 
-              placeholder="Repete a palavra-passe"
+              placeholder="Introduz a tua palavra-passe"
               required
             >
           </div>
@@ -673,20 +524,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="form-group">
           <button class="btn btn-primary" type="submit">
-            <i class="bi bi-check-circle me-2"></i>
-            Criar conta
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Entrar
           </button>
         </div>
       </form>
     </div>
 
-    <div class="login-link">
-      <p>Já tens conta? <a href="login.php">Entra aqui</a></p>
+    <div class="register-link">
+      <p>Ainda não tens conta? <a href="register.php">Regista-te aqui</a></p>
     </div>
   </div>
 
   <div class="text-center mt-4">
-    <a href="index.php" class="back-link">
+    <a href="../index.php" class="back-link">
       <i class="bi bi-arrow-left"></i>
       <span>Voltar à página inicial</span>
     </a>
@@ -711,28 +562,6 @@ function createParticles() {
 }
 
 createParticles();
-
-// Password strength indicator melhorado
-document.getElementById('password').addEventListener('input', function(e) {
-  const password = e.target.value;
-  const strengthBar = document.getElementById('strength-bar');
-  
-  let strength = 0;
-  if (password.length >= 8) strength++;
-  if (/[A-Z]/.test(password)) strength++;
-  if (/[a-z]/.test(password)) strength++;
-  if (/[0-9]/.test(password)) strength++;
-  if (/[^A-Za-z0-9]/.test(password)) strength++;
-  
-  strengthBar.className = 'password-strength-bar';
-  if (strength >= 4) {
-    strengthBar.classList.add('strength-strong');
-  } else if (strength >= 2) {
-    strengthBar.classList.add('strength-medium');
-  } else if (strength >= 1) {
-    strengthBar.classList.add('strength-weak');
-  }
-});
 </script>
 </body>
 </html>

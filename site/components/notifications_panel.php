@@ -104,7 +104,7 @@ function dismissNotification(notificationId) {
     element.style.animation = 'slideInRight 0.3s ease-out reverse';
     
     setTimeout(() => {
-        fetch('mark_notification_read.php', {
+        fetch('../helpers/mark_notification_read.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

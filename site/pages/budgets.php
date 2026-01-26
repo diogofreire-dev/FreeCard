@@ -1,9 +1,9 @@
 <?php
 // site/budgets.php
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../../config/db.php';
 $uid = $_SESSION['user_id'] ?? null;
-require_once __DIR__ . '/theme_helper.php';
+require_once __DIR__ . '/../helpers/theme_helper.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
 $message = '';
@@ -162,7 +162,7 @@ $cards = $stmt->fetchAll();
   <title>Orçamentos - FreeCard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="../css/theme.css">
   <style>
     /* ========== BACKGROUND ANIMADO ========== */
     body {
@@ -433,8 +433,8 @@ $cards = $stmt->fetchAll();
 </div>
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="dashboard.php">
-      <img src="assets/logo2.png" alt="Freecard">
+    <a class="navbar-brand fw-bold" href="../dashboard.php">
+      <img src="../assets/logo2.png" alt="Freecard">
       FreeCard
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -442,7 +442,7 @@ $cards = $stmt->fetchAll();
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="../dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
         <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
         <li class="nav-item"><a class="nav-link active" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
@@ -455,7 +455,7 @@ $cards = $stmt->fetchAll();
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
           </ul>
         </li>
       </ul>

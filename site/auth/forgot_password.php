@@ -2,9 +2,9 @@
 // site/forgot_password.php - Página para solicitar reset de palavra-passe
 
 session_start();
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/EmailService.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../config/EmailService.php';
 
 $errors = [];
 $success = false;

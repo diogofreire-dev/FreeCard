@@ -8,6 +8,6 @@ session_start();
 if (empty($_SESSION['user_id'])) {
     // podes redirecionar para login com uma query string para voltar depois
     $return = urlencode($_SERVER['REQUEST_URI'] ?? '/');
-    header("Location: /login.php?next={$return}");
+    header("Location: /site/auth/login.php?next={$return}");
     exit;
 }

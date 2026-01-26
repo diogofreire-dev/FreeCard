@@ -1,13 +1,31 @@
 <?php
-// site/add_card.php
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../config/db.php';
+// site/edit_card.php
+require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../../config/db.php';
 $uid = $_SESSION['user_id'] ?? null;
-require_once __DIR__ . '/theme_helper.php';
+require_once __DIR__ . '/../helpers/theme_helper.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
 $errors = [];
 $success = false;
+
+// Obter ID do cartão
+$card_id = !empty($_GET['id']) ? intval($_GET['id']) : null;
+
+if (!$card_id) {
+    header('Location: cards.php');
+    exit;
+}
+
+// Buscar o cartão
+$stmt = $pdo->prepare("SELECT * FROM cards WHERE id = :id AND user_id = :uid");
+$stmt->execute([':id' => $card_id, ':uid' => $uid]);
+$card = $stmt->fetch();
+
+if (!$card) {
+    header('Location: cards.php');
+    exit;
+}
 
 // Cores disponíveis para os cartões
 $cardColors = [
@@ -21,11 +39,21 @@ $cardColors = [
     'indigo' => ['name' => 'Índigo', 'gradient' => 'linear-gradient(135deg, #3F51B5 0%, #3F51B5 100%)']
 ];
 
+// Buscar total de transações associadas ao cartão
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total
+    FROM transactions 
+    WHERE card_id = :id
+");
+$stmt->execute([':id' => $card_id]);
+$cardStats = $stmt->fetch();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $limit = floatval($_POST['limit_amount'] ?? 0);
     $balance = floatval($_POST['balance'] ?? 0);
     $color = $_POST['color'] ?? 'purple';
+    $active = isset($_POST['active']) ? 1 : 0;
 
     // Validações
     if (strlen($name) < 3) {
@@ -47,23 +75,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO cards (user_id, name, limit_amount, balance, active, color)
-                VALUES (:uid, :name, :limit, :balance, 1, :color)
+                UPDATE cards
+                SET name = :name, limit_amount = :limit,
+                    balance = :balance, color = :color, active = :active
+                WHERE id = :id AND user_id = :uid
             ");
             $stmt->execute([
-                ':uid' => $uid,
                 ':name' => $name,
                 ':limit' => $limit,
                 ':balance' => $balance,
-                ':color' => $color
+                ':color' => $color,
+                ':active' => $active,
+                ':id' => $card_id,
+                ':uid' => $uid
             ]);
-            $success = true;
 
-            // Limpar campos após sucesso
-            header('Location: cards.php?success=card_added');
+            $success = true;
+            header('Location: cards.php?success=card_updated');
             exit;
         } catch (PDOException $e) {
-            $errors[] = 'Erro ao adicionar cartão. Tenta novamente.';
+            $errors[] = 'Erro ao atualizar cartão. Tenta novamente.';
         }
     }
 }
@@ -73,93 +104,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Adicionar Cartão - Freecard</title>
+  <title>Editar Cartão - Freecard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="../css/theme.css">
 <style>
   /* ========== BACKGROUND ANIMADO ========== */
-    body {
-      position: relative;
-      min-height: 100vh;
-    }
-    .bg-animation {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    [data-theme="light"] body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #e8eef5ff 0%, #e9eef8ff 50%, #e8edf5ff 100%);
-      z-index: -1;
-    }
-    [data-theme="dark"] body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #1a1d29 0%, #252936 50%, #1a1d29 100%);
-      z-index: -1;
-    }
-    .floating-shape {
-      position: absolute;
-      border-radius: 50%;
-      animation: float 20s infinite ease-in-out;
-    }
-    [data-theme="light"] .floating-shape {
-      background: rgba(46, 88, 204);
-    }
-    [data-theme="dark"] .floating-shape {
-      background: rgba(46, 88, 204);
-    }
-    .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
-    .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
-    .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
-    .shape4 { width: 100px; height: 100px; bottom: 20%; left: 15%; animation-delay: 7s; }
-    .shape5 { width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 3s; }
-    .shape6 { width: 250px; height: 300px; top: -100px; right: -100px; animation-delay: 6s; }
-    .shape7 { width: 180px; height: 180px; top: 10%; left: 70%; animation-delay: 1s; }
-    .shape8 { width: 120px; height: 120px; bottom: 10%; right: 30%; animation-delay: 4s; }
-    .shape9 { width: 220px; height: 220px; top: 60%; left: -80px; animation-delay: 8s; }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
-      50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
-    }
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      animation: rise 15s infinite ease-in;
-    }
-    [data-theme="light"] .particle { background: rgba(46, 88, 204); }
-    [data-theme="dark"] .particle { background: rgba(46, 88, 204); }
-    @keyframes rise {
-      0% { transform: translateY(0) translateX(0); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
-    }
-    .navbar, .container { position: relative; z-index: 1; }
-    @media (max-width: 768px) {
-      .floating-shape { opacity: 0.4; animation-duration: 25s; }
-      .particle { display: none; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .floating-shape, .particle { animation: none; opacity: 0.2; }
-    }
+  body {
+    position: relative;
+    min-height: 100vh;
+  }
+  .bg-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  [data-theme="light"] body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e8eef5ff 0%, #e9eef8ff 50%, #e8edf5ff 100%);
+    z-index: -1;
+  }
+  [data-theme="dark"] body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1d29 0%, #252936 50%, #1a1d29 100%);
+    z-index: -1;
+  }
+  .floating-shape {
+    position: absolute;
+    border-radius: 50%;
+    animation: float 20s infinite ease-in-out;
+  }
+  [data-theme="light"] .floating-shape {
+    background: rgba(46, 88, 204);
+  }
+  [data-theme="dark"] .floating-shape {
+    background: rgba(46, 88, 204);
+  }
+  .shape1 { width: 300px; height: 300px; top: -100px; left: -100px; animation-delay: 0s; }
+  .shape2 { width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: 5s; }
+  .shape3 { width: 150px; height: 150px; top: 50%; right: 10%; animation-delay: 2s; }
+  .shape4 { width: 100px; height: 100px; bottom: 20%; left: 15%; animation-delay: 7s; }
+  .shape5 { width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 3s; }
+  .shape6 { width: 250px; height: 300px; top: -100px; right: -100px; animation-delay: 6s; }
+  .shape7 { width: 180px; height: 180px; top: 10%; left: 70%; animation-delay: 1s; }
+  .shape8 { width: 120px; height: 120px; bottom: 10%; right: 30%; animation-delay: 4s; }
+  .shape9 { width: 220px; height: 220px; top: 60%; left: -80px; animation-delay: 8s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+    50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+  }
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: rise 15s infinite ease-in;
+  }
+  [data-theme="light"] .particle { background: rgba(46, 88, 204); }
+  [data-theme="dark"] .particle { background: rgba(46, 88, 204); }
+  @keyframes rise {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+  }
+  .navbar, .container { position: relative; z-index: 1; }
+  @media (max-width: 768px) {
+    .floating-shape { opacity: 0.4; animation-duration: 25s; }
+    .particle { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .floating-shape, .particle { animation: none; opacity: 0.2; }
+  }
     :root {
       --primary-blue: #3498db;
       --dark-blue: #2980b9;
@@ -183,14 +214,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-color: var(--dark-blue);
       transform: translateY(-2px);
       box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    }
-    .btn-outline-primary {
-      color: var(--primary-blue);
-      border-color: var(--primary-blue);
-    }
-    .btn-outline-primary:hover {
-      background: var(--primary-blue);
-      border-color: var(--primary-blue);
     }
     .card {
       border: none;
@@ -218,8 +241,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--text-primary);
     }
     .form-control:focus, .form-select:focus {
-      border-color: var(--primary-green);
-      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
       background: var(--bg-primary);
       color: var(--text-primary);
     }
@@ -277,8 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       display: none;
     }
     .color-option input[type="radio"]:checked + .color-display {
-      border-color: var(--primary-green);
-      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.3);
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
     }
     .color-display {
       width: 100%;
@@ -286,15 +309,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-radius: 8px;
       border: 3px solid transparent;
       transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
-    .color-option input[type="radio"]:checked + .color-display::after {
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    
+    .info-box {
+      background: var(--bg-primary);
+      padding: 16px;
+      border-radius: 8px;
+    }
+    .form-check-input:checked {
+      background-color: var(--primary-blue);
+      border-color: var(--primary-blue);
     }
     
     [data-theme="dark"] .text-muted {
@@ -304,25 +328,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--text-secondary);
       opacity: 0.7;
     }
+    [data-theme="dark"] .bg-light {
+      background: var(--bg-hover) !important;
+      color: var(--text-primary);
+    }
   </style>
 </head>
 <body>
   <!-- Background animado -->
-  <div class="bg-animation">
-    <div class="floating-shape shape1"></div>
-    <div class="floating-shape shape2"></div>
-    <div class="floating-shape shape3"></div>
-    <div class="floating-shape shape4"></div>
-    <div class="floating-shape shape5"></div>
-    <div class="floating-shape shape6"></div>
-    <div class="floating-shape shape7"></div>
-    <div class="floating-shape shape8"></div>  
-    <div class="floating-shape shape9"></div>
-  </div>
+<div class="bg-animation">
+  <div class="floating-shape shape1"></div>
+  <div class="floating-shape shape2"></div>
+  <div class="floating-shape shape3"></div>
+  <div class="floating-shape shape4"></div>
+  <div class="floating-shape shape5"></div>
+  <div class="floating-shape shape6"></div>
+  <div class="floating-shape shape7"></div>
+  <div class="floating-shape shape8"></div>  
+  <div class="floating-shape shape9"></div>
+</div>
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="dashboard.php">
-      <img src="assets/logo2.png" alt="Freecard">
+    <a class="navbar-brand fw-bold" href="../dashboard.php">
+      <img src="../assets/logo2.png" alt="Freecard">
       FreeCard
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -330,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="../dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
         <li class="nav-item"><a class="nav-link active" href="cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
         <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
         <li class="nav-item"><a class="nav-link" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
@@ -343,9 +371,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
           </ul>
-        </li>      
+        </li>
       </ul>
     </div>
   </div>
@@ -365,7 +393,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="card">
             <div class="card-body p-4">
               <h5 class="mb-4"><i class="bi bi-eye"></i> Pré-visualização</h5>
-              <div class="card-preview" id="cardPreview" style="background: <?=$cardColors['purple']['gradient']?>;">
+              <div class="card-preview" id="cardPreview" style="background: <?=$cardColors[$card['color']]['gradient']?>;">
                 <div>
                   <div class="mb-3">
                     <i class="bi bi-credit-card" style="font-size: 32px;"></i>
@@ -373,10 +401,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <div class="card-number" id="preview-number">•••• •••• •••• ••••</div>
                 </div>
                 <div>
-                  <div class="card-name" id="preview-name">NOME DO CARTÃO</div>
+                  <div class="card-name" id="preview-name"><?=strtoupper(htmlspecialchars($card['name']))?></div>
                   <div class="d-flex justify-content-between align-items-center mt-2">
-                    <small>Limite: <span id="preview-limit">€0.00</span></small>
-                    <small>Saldo: <span id="preview-balance">€0.00</span></small>
+                    <small>Limite: <span id="preview-limit">€<?=number_format($card['limit_amount'], 2)?></span></small>
+                    <small>Saldo: <span id="preview-balance">€<?=number_format($card['balance'], 2)?></span></small>
                   </div>
                 </div>
               </div>
@@ -384,13 +412,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <div class="mt-4">
                 <h6 class="mb-3">Utilização do Limite</h6>
                 <div class="progress-custom">
-                  <div class="progress-bar-custom" id="usage-bar" style="width: 0%"></div>
+                  <div class="progress-bar-custom" id="usage-bar" style="width: <?=min(($card['balance'] / max($card['limit_amount'], 1)) * 100, 100)?>%"></div>
                 </div>
                 <div class="d-flex justify-content-between mt-2">
                   <small class="text-muted">0%</small>
-                  <small class="text-muted" id="usage-percent">0% usado</small>
+                  <small class="text-muted" id="usage-percent"><?=round(($card['balance'] / max($card['limit_amount'], 1)) * 100)?>% usado</small>
                 </div>
               </div>
+
+              <?php if ($cardStats['count'] > 0): ?>
+              <div class="mt-4">
+                <h6 class="mb-3">Estatísticas</h6>
+                <div class="p-3 bg-light rounded">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Transações associadas</span>
+                    <strong><?=$cardStats['count']?></strong>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="text-muted">Total gasto</span>
+                    <strong class="text-danger">€<?=number_format($cardStats['total'], 2)?></strong>
+                  </div>
+                </div>
+              </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -398,16 +442,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-lg-7">
           <div class="card">
             <div class="card-header text-white">
-              <h4 class="mb-0"><i class="bi bi-credit-card-2-front"></i> Adicionar Novo Cartão</h4>
+              <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Cartão</h4>
             </div>
             <div class="card-body p-4">
-              <?php if ($success): ?>
-                <div class="alert alert-success alert-dismissible fade show">
-                  <i class="bi bi-check-circle"></i> Cartão adicionado com sucesso!
-                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-              <?php endif; ?>
-
               <?php if (!empty($errors)): ?>
                 <div class="alert alert-danger">
                   <strong><i class="bi bi-exclamation-circle"></i> Erros:</strong>
@@ -419,6 +456,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
               <?php endif; ?>
 
+              <div class="info-box mb-4">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-info-circle text-primary"></i>
+                  <div>
+                    <strong>Data de criação:</strong> <?=date('d/m/Y H:i', strtotime($card['created_at']))?>
+                    <br>
+                    <small class="text-muted">Esta informação não será alterada</small>
+                  </div>
+                </div>
+              </div>
+
               <form method="post" id="cardForm">
                 <div class="mb-3">
                   <label class="form-label">Nome do Cartão *</label>
@@ -428,7 +476,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     id="cardName"
                     class="form-control" 
                     placeholder="ex: Visa Principal, Mastercard Viagens"
-                    value="<?=htmlspecialchars($name ?? '')?>" 
+                    value="<?=htmlspecialchars($card['name'])?>" 
                     required
                   >
                   <small class="text-muted">Dá um nome descritivo ao teu cartão</small>
@@ -443,7 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           type="radio" 
                           name="color" 
                           value="<?=$colorKey?>" 
-                          <?=($color ?? 'purple') === $colorKey ? 'checked' : ''?>
+                          <?=$card['color'] === $colorKey ? 'checked' : ''?>
                           data-gradient="<?=$colorData['gradient']?>"
                         >
                         <div class="color-display" style="background: <?=$colorData['gradient']?>;"></div>
@@ -464,14 +512,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       placeholder="1500.00"
                       step="0.01"
                       min="0"
-                      value="<?=htmlspecialchars($limit ?? 0)?>" 
+                      value="<?=htmlspecialchars($card['limit_amount'])?>" 
                       required
                     >
                     <small class="text-muted">O limite máximo de gastos</small>
                   </div>
 
                   <div class="col-md-6 mb-3">
-                    <label class="form-label">Gasto Inicial (€)</label>
+                    <label class="form-label">Saldo Atual (€)</label>
                     <input 
                       type="number" 
                       name="balance" 
@@ -480,15 +528,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       placeholder="0.00"
                       step="0.01"
                       min="0"
-                      value="<?=htmlspecialchars($balance ?? 0)?>"
+                      value="<?=htmlspecialchars($card['balance'])?>"
                     >
-                    <small class="text-muted">Se já tens gastos acumulados</small>
+                    <small class="text-muted">O gasto acumulado atual</small>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <div class="form-check form-switch">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      name="active" 
+                      id="cardActive"
+                      <?=$card['active'] ? 'checked' : ''?>
+                    >
+                    <label class="form-check-label" for="cardActive">
+                      <strong>Cartão ativo</strong>
+                      <br>
+                      <small class="text-muted">Cartões inativos não aparecem nas opções de transação</small>
+                    </label>
                   </div>
                 </div>
 
                 <div class="d-grid gap-2 mt-4">
                   <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-plus-circle"></i> Adicionar Cartão
+                    <i class="bi bi-check-circle"></i> Guardar Alterações
                   </button>
                   <a href="cards.php" class="btn btn-outline-secondary">
                     Cancelar
@@ -545,7 +610,6 @@ function updateUsage() {
     }
   }
 }
-<!-- Gerar partículas (apenas desktop) -->
 
 (function() {
   if (window.innerWidth <= 768) return;

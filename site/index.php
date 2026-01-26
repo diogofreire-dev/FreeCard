@@ -559,10 +559,10 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto align-items-center">
         <li class="nav-item me-3">
-          <a class="nav-link" href="login.php">Entrar</a>
+          <a class="nav-link" href="auth/login.php">Entrar</a>
         </li>
         <li class="nav-item">
-          <a class="btn btn-primary" href="register.php" style="border-radius: 50px; padding: 10px 30px;">Começar agora</a>
+          <a class="btn btn-primary" href="auth/register.php" style="border-radius: 50px; padding: 10px 30px;">Começar agora</a>
         </li>
       </ul>
     </div>
@@ -576,11 +576,11 @@
         <h1>Controla os teus <span>cartões</span> com simplicidade</h1>
         <p>Gere os teus cartões e transações de forma inteligente. Acompanha os teus gastos e mantém-te sempre dentro do orçamento.</p>
         <div class="hero-buttons">
-          <a href="register.php" class="btn-hero">
+          <a href="auth/register.php" class="btn-hero">
             Começar gratuitamente
             <i class="bi bi-arrow-right"></i>
           </a>
-          <a href="login.php" class="btn-hero-outline">
+          <a href="auth/login.php" class="btn-hero-outline">
             Já tenho conta
             <i class="bi bi-box-arrow-in-right"></i>
           </a>
@@ -708,7 +708,7 @@
     <div class="cta-content fade-in">
       <h2>Pronto para começar?</h2>
       <p>Cria a tua conta gratuitamente e começa a gerir as tuas finanças de forma inteligente.</p>
-      <a href="register.php" class="btn-cta">
+      <a href="auth/register.php" class="btn-cta">
         <i class="bi bi-check-circle-fill"></i>
         Criar conta gratuita
       </a>
@@ -729,8 +729,8 @@
       <div class="col-md-3 mb-4 mb-md-0">
         <h6 class="mb-3">Links Rápidos</h6>
         <ul class="list-unstyled">
-          <li class="mb-2"><a href="register.php"><i class="bi bi-arrow-right"></i> Criar Conta</a></li>
-          <li class="mb-2"><a href="login.php"><i class="bi bi-arrow-right"></i> Entrar</a></li>
+          <li class="mb-2"><a href="auth/register.php"><i class="bi bi-arrow-right"></i> Criar Conta</a></li>
+          <li class="mb-2"><a href="auth/login.php"><i class="bi bi-arrow-right"></i> Entrar</a></li>
         </ul>
       </div>
       <div class="col-md-3">

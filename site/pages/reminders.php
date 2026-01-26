@@ -1,9 +1,9 @@
 <?php
 // site/reminders.php
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../../config/db.php';
 $uid = $_SESSION['user_id'] ?? null;
-require_once __DIR__ . '/theme_helper.php';
+require_once __DIR__ . '/../helpers/theme_helper.php';
 $currentTheme = getUserTheme($pdo, $uid);
 
 $message = '';
@@ -325,7 +325,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
   <title>Lembretes de Pagamento - FreeCard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="../css/theme.css">
   <style>
     body { position: relative; min-height: 100vh; }
     .bg-animation {
@@ -549,15 +549,15 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
 
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="dashboard.php">
-      <img src="assets/logo2.png" alt="Freecard"> FreeCard
+    <a class="navbar-brand fw-bold" href="../dashboard.php">
+      <img src="../assets/logo2.png" alt="Freecard"> FreeCard
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="../dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="cards.php"><i class="bi bi-wallet2"></i> Cartões</a></li>
         <li class="nav-item"><a class="nav-link" href="transactions.php"><i class="bi bi-receipt"></i> Transações</a></li>
         <li class="nav-item"><a class="nav-link" href="budgets.php"><i class="bi bi-piggy-bank"></i> Orçamentos</a></li>
@@ -570,7 +570,7 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
           </ul>
         </li>
       </ul>
@@ -638,28 +638,28 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     <?php if (!empty($overdueReminders)): ?>
       <h5 class="text-danger mb-3"><i class="bi bi-exclamation-triangle"></i> Pagamentos Atrasados</h5>
       <?php foreach($overdueReminders as $r): ?>
-        <?php include 'reminder_card.php'; ?>
+        <?php include '../components/reminder_card.php'; ?>
       <?php endforeach; ?>
     <?php endif; ?>
     
     <?php if (!empty($upcomingReminders)): ?>
       <h5 class="mb-3" style="color: #f39c12;"><i class="bi bi-clock-history"></i> Vencimentos Próximos</h5>
       <?php foreach($upcomingReminders as $r): ?>
-        <?php include 'reminder_card.php'; ?>
+        <?php include '../components/reminder_card.php'; ?>
       <?php endforeach; ?>
     <?php endif; ?>
     
     <?php if (!empty($futureReminders)): ?>
       <h5 class="mb-3"><i class="bi bi-calendar3"></i> Pagamentos Futuros</h5>
       <?php foreach($futureReminders as $r): ?>
-        <?php include 'reminder_card.php'; ?>
+        <?php include '../components/reminder_card.php'; ?>
       <?php endforeach; ?>
     <?php endif; ?>
     
     <?php if (!empty($inactiveReminders)): ?>
       <h5 class="text-muted mb-3"><i class="bi bi-archive"></i> Inativos</h5>
       <?php foreach($inactiveReminders as $r): ?>
-        <?php include 'reminder_card.php'; ?>
+        <?php include '../components/reminder_card.php'; ?>
       <?php endforeach; ?>
     <?php endif; ?>
     

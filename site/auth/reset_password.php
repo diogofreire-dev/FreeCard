@@ -2,7 +2,7 @@
 // site/reset_password.php - Página para redefinir a palavra-passe
 
 session_start();
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 $errors = [];
 $success = false;
