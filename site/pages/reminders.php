@@ -407,10 +407,10 @@ $inactiveReminders = array_filter($reminders, fn($r) => !$r['active']);
     }
     
     .reminder-card.overdue {
-      border-color: #e74c3c; background: rgba(231, 76, 60, 0.05);
+      border-color: #e74c3c; background: var(--bg-secondary);
     }
     .reminder-card.upcoming {
-      border-color: #f39c12; background: rgba(243, 156, 18, 0.05);
+      border-color: #f39c12; background: var(--bg-secondary);
     }
     
     .status-badge {
