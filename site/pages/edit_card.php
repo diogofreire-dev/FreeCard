@@ -332,6 +332,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: var(--bg-hover) !important;
       color: var(--text-primary);
     }
+
+    /* Remove number input spinners */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
   </style>
 </head>
 <body>

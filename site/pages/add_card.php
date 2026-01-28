@@ -304,6 +304,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--text-secondary);
       opacity: 0.7;
     }
+
+    /* Remove number input spinners */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
   </style>
 </head>
 <body>
