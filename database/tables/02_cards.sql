@@ -1,0 +1,14 @@
+-- Tabela: cards
+CREATE TABLE IF NOT EXISTS cards (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  limit_amount DECIMAL(10,2) DEFAULT 0,
+  balance DECIMAL(10,2) DEFAULT 0,
+  color VARCHAR(20) DEFAULT 'purple',
+  active TINYINT(1) DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_active (user_id, active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

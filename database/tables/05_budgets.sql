@@ -1,0 +1,19 @@
+-- Tabela: budgets
+CREATE TABLE IF NOT EXISTS budgets (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  period ENUM('monthly', 'weekly', 'yearly') NOT NULL DEFAULT 'monthly',
+  category VARCHAR(100) NULL,
+  card_id INT UNSIGNED NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NULL,
+  active TINYINT(1) DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL,
+  INDEX idx_user_active (user_id, active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
