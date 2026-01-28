@@ -1,6 +1,6 @@
 -- Tabela: users
 CREATE TABLE IF NOT EXISTS users (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id INT UNSIGNED PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
@@ -12,8 +12,10 @@ CREATE TABLE IF NOT EXISTS users (
   last_password_change DATETIME NULL,
   last_email_change DATETIME NULL,
   two_factor_enabled TINYINT(1) DEFAULT 0,
-  two_factor_secret VARCHAR(255) NULL,
-
-  INDEX idx_email_verified (email_verified),
-  INDEX idx_verification_token (verification_token)
+  two_factor_secret VARCHAR(255) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE users MODIFY id INT UNSIGNED AUTO_INCREMENT;
+
+CREATE INDEX idx_email_verified ON users(email_verified);
+CREATE INDEX idx_verification_token ON users(verification_token);

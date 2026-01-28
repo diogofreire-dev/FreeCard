@@ -1,6 +1,6 @@
 -- Tabela: payment_reminders
 CREATE TABLE IF NOT EXISTS payment_reminders (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id INT UNSIGNED PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   name VARCHAR(255) NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
@@ -15,10 +15,12 @@ CREATE TABLE IF NOT EXISTS payment_reminders (
   last_paid_date DATE NULL,
   next_due_date DATE NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL,
-  INDEX idx_user_due (user_id, due_date),
-  INDEX idx_active (active)
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE payment_reminders MODIFY id INT UNSIGNED AUTO_INCREMENT;
+ALTER TABLE payment_reminders ADD CONSTRAINT fk_reminders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE payment_reminders ADD CONSTRAINT fk_reminders_card FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_reminders_user_due ON payment_reminders(user_id, due_date);
+CREATE INDEX idx_reminders_active ON payment_reminders(active);
